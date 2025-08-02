@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EZGangSheets</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <div class="max-w-2xl mx-auto p-6">
+
+    <!-- ✅ Logo -->
+    <div class="text-center mb-6">
+      <img src="EZGangSheetsLogo.png" alt="EZGangSheets Logo" class="mx-auto mb-4 max-h-12">
+      <p class="text-gray-600">DTF Gang Sheet Generator</p>
+    </div>
+
+    <!-- ✅ Tab Navigation -->
+    <div class="bg-white shadow-md rounded-lg mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+          <button id="gangSheetTab" class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button active">
+            Gang Sheet Generator
+          </button>
+          <button id="quoteTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
+            Cost Calculator
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ✅ Gang Sheet Generator Tab -->
+    <div id="gangSheetContent" class="tab-content">
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <form id="uploadForm" class="space-y-4">
+
+        <!-- ✅ Enhanced Drag-and-Drop Zone for Multiple Files -->
+        <div id="dropZone"
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition">
+          <div class="flex flex-col items-center justify-center space-y-2">
+            <!-- Cloud Upload Icon -->
+            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01.88-7.9A5 5 0 1119 11h1a3 3 0 010 6h-3m-4-4v6m0 0l-2-2m2 2l2-2"/>
+            </svg>
+            <p class="text-gray-500" id="dropZoneText">
+              <strong>Drag & drop your files here</strong><br>
+              <span class="text-sm">Supports PDF files (max 10 files)</span>
+            </p>
+          </div>
+          <input type="file" id="file" class="hidden" accept="application/pdf" multiple required />
+        </div>
+
+        <!-- ✅ File List Section -->
+        <div id="fileList" class="space-y-3 hidden">
+          <h3 class="font-medium text-gray-700">Selected Files:</h3>
+          <div id="fileItems" class="space-y-2"></div>
+        </div>
+
+        <!-- ✅ Selected File + Thumbnail Preview (keeping original for now) -->
+        <div id="filePreview" class="mt-4 hidden">
+          <p id="fileName" class="text-green-700 font-medium mb-2"></p>
+          <canvas id="pdfThumbnail" class="border rounded-md shadow-sm"></canvas>
+        </div>
+
+
+
+        <!-- ✅ Rotate? -->
+        <div>
+          <label class="block font-medium mb-1">Rotate 90°?</label>
+          <select id="rotate" name="rotate" class="block w-full border border-gray-300 rounded-lg p-2">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+
+        <!-- ✅ Width -->
+        <div>
+          <label class="block font-medium mb-1">Gang Sheet Width</label>
+          <select id="gangWidth" name="gangWidth" class="block w-full border border-gray-300 rounded-lg p-2">
+            <option value="22" selected>22 inches</option>
+            <option value="30">30 inches</option>
+          </select>
+        </div>
+
+        <!-- ✅ Max Length -->
+        <div>
+          <label class="block font-medium mb-1">Max Sheet Length (inches)</label>
+          <input type="number" id="maxLength" name="maxLength" min="12" value="200" 
+            class="block w-full border border-gray-300 rounded-lg p-2" />
+        </div>
+
+        <button id="generateBtn" type="submit" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+          Generate All Gang Sheets
+        </button>
+      </form>
+    </div>
+
+    <!-- ✅ Results Section -->
+    <div id="log" class="mt-6"></div>
+      </div>
+    </div>
+
+    <!-- ✅ Cost Calculator Tab -->
+    <div id="quoteContent" class="tab-content hidden">
+      <div class="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto">
+        <form id="quoteForm" class="space-y-4">
+          <!-- Artwork Dimensions -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-medium mb-2 text-gray-700">Artwork Width (inches)</label>
+              <input type="number" id="artWidth" step="0.1" min="0.1" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 6.5" required>
+            </div>
+            <div>
+              <label class="block font-medium mb-2 text-gray-700">Artwork Height (inches)</label>
+              <input type="number" id="artHeight" step="0.1" min="0.1" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 4.2" required>
+            </div>
+          </div>
+
+          <!-- Quantity -->
+          <div>
+            <label class="block font-medium mb-2 text-gray-700">Quantity Needed</label>
+            <input type="number" id="quoteQuantity" min="1" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 100" required>
+          </div>
+
+          <!-- Gang Sheet Settings -->
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block font-medium mb-2 text-gray-700">Rotate 90°?</label>
+              <select id="quoteRotate" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2 text-gray-700">Gang Sheet Width</label>
+              <select id="quoteGangWidth" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="22">22 inches</option>
+                <option value="30">30 inches</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2 text-gray-700">Max Sheet Length</label>
+              <input type="number" id="quoteMaxLength" min="12" value="200" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- Calculate Button -->
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+            Calculate Cost
+          </button>
+        </form>
+
+        <!-- Quote Results -->
+        <div id="quoteResults" class="mt-6 hidden">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="text-lg font-bold text-blue-800 mb-3">Cost Breakdown</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Artwork Info -->
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Dimensions:</span>
+                  <span id="artDimensions" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Quantity:</span>
+                  <span id="artQuantity" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Logos per sheet:</span>
+                  <span id="logosPerSheet" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Sheets needed:</span>
+                  <span id="sheetsNeeded" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Sheet size:</span>
+                  <span id="sheetSize" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Cost per sheet:</span>
+                  <span id="costPerSheet" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Cost per logo:</span>
+                  <span id="costPerLogo" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between border-t pt-2">
+                  <span class="text-gray-800 font-semibold">Total cost:</span>
+                  <span id="totalCost" class="font-bold text-lg text-blue-600"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 flex space-x-3">
+              <button id="copyQuote" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                Copy Quote
+              </button>
+              <button id="createGangSheet" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                Create Gang Sheet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ✅ PDF.js (for thumbnail rendering) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+  <script>
+    // Tab switching functionality
+    const gangSheetTab = document.getElementById("gangSheetTab");
+    const quoteTab = document.getElementById("quoteTab");
+    const gangSheetContent = document.getElementById("gangSheetContent");
+    const quoteContent = document.getElementById("quoteContent");
+
+    gangSheetTab.addEventListener("click", () => switchTab("gangSheet"));
+    quoteTab.addEventListener("click", () => switchTab("quote"));
+
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll(".tab-button").forEach(btn => {
+        btn.classList.remove("border-blue-500", "text-blue-600");
+        btn.classList.add("border-transparent", "text-gray-500");
+      });
+
+      // Hide all content
+      document.querySelectorAll(".tab-content").forEach(content => {
+        content.classList.add("hidden");
+      });
+
+      // Show selected tab
+      if (tabName === "gangSheet") {
+        gangSheetTab.classList.remove("border-transparent", "text-gray-500");
+        gangSheetTab.classList.add("border-blue-500", "text-blue-600");
+        gangSheetContent.classList.remove("hidden");
+      } else {
+        quoteTab.classList.remove("border-transparent", "text-gray-500");
+        quoteTab.classList.add("border-blue-500", "text-blue-600");
+        quoteContent.classList.remove("hidden");
+      }
+    }
+
+    // Cost calculation functionality
+    const quoteForm = document.getElementById("quoteForm");
+    const quoteResults = document.getElementById("quoteResults");
+
+    quoteForm.addEventListener("submit", calculateCost);
+
+    function calculateCost(e) {
+      e.preventDefault();
+      
+      const artWidth = parseFloat(document.getElementById("artWidth").value);
+      const artHeight = parseFloat(document.getElementById("artHeight").value);
+      const quantity = parseInt(document.getElementById("quoteQuantity").value);
+      const gangWidth = parseInt(document.getElementById("quoteGangWidth").value);
+      const maxLength = parseInt(document.getElementById("quoteMaxLength").value);
+      const rotate = document.getElementById("quoteRotate").value === "true";
+
+      if (!artWidth || !artHeight || !quantity) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      // Calculate layout dimensions
+      let layoutWidth = artWidth;
+      let layoutHeight = artHeight;
+      if (rotate) [layoutWidth, layoutHeight] = [layoutHeight, layoutWidth];
+
+      // Convert to points
+      const POINTS_PER_INCH = 72;
+      const SAFE_MARGIN_INCH = 0.125;
+      const SPACING_INCH = 0.5;
+
+      const layoutWidthPts = layoutWidth * POINTS_PER_INCH;
+      const layoutHeightPts = layoutHeight * POINTS_PER_INCH;
+      const safeMarginPts = SAFE_MARGIN_INCH * POINTS_PER_INCH;
+      const spacingPts = SPACING_INCH * POINTS_PER_INCH;
+      const sheetWidthPts = gangWidth * POINTS_PER_INCH;
+      const maxHeightPts = maxLength * POINTS_PER_INCH;
+
+      const logoTotalWidth = layoutWidthPts + spacingPts;
+      const logoTotalHeight = layoutHeightPts + spacingPts;
+
+      const logosPerRow = Math.floor((sheetWidthPts - safeMarginPts * 2 + spacingPts) / logoTotalWidth);
+      const rowsPerSheet = Math.floor((maxHeightPts - safeMarginPts * 2 + spacingPts) / logoTotalHeight);
+      const logosPerSheet = logosPerRow * rowsPerSheet;
+      const sheetsNeeded = Math.ceil(quantity / logosPerSheet);
+
+      // Calculate cost for each sheet individually
+      const costTable = {
+        12: 5.28, 24: 10.56, 36: 15.84, 48: 21.12, 60: 26.40, 80: 35.20,
+        100: 44.00, 120: 49.28, 140: 56.32, 160: 61.60, 180: 68.64, 200: 75.68
+      };
+
+      function calculateCost(widthInches, heightInches) {
+        const roundedHeight = Math.ceil(heightInches / 12) * 12;
+        if (costTable[roundedHeight]) return costTable[roundedHeight];
+        const availableTiers = Object.keys(costTable).map(Number).sort((a, b) => a - b);
+        const nextTier = availableTiers.find(t => t >= roundedHeight) || Math.max(...availableTiers);
+        return costTable[nextTier];
+      }
+
+      // Calculate cost for each sheet individually
+      let totalCost = 0;
+      let remainingLogos = quantity;
+      let sheetDetails = [];
+
+      for (let sheetIndex = 0; sheetIndex < sheetsNeeded; sheetIndex++) {
+        const logosOnThisSheet = Math.min(remainingLogos, logosPerSheet);
+        const rowsOnThisSheet = Math.ceil(logosOnThisSheet / logosPerRow);
+        
+        const usedHeightPts = rowsOnThisSheet * logoTotalHeight + safeMarginPts * 2 - spacingPts;
+        const sheetHeightInches = Math.ceil(usedHeightPts / POINTS_PER_INCH);
+        
+        const sheetCost = calculateCost(gangWidth, sheetHeightInches);
+        totalCost += sheetCost;
+        
+        sheetDetails.push({
+          logos: logosOnThisSheet,
+          height: sheetHeightInches,
+          cost: sheetCost
+        });
+        
+        remainingLogos -= logosOnThisSheet;
+      }
+
+      // For display, show the first sheet details (most common case)
+      const firstSheet = sheetDetails[0];
+      const costPerSheet = firstSheet.cost;
+
+      // Calculate cost per logo
+      const costPerLogo = totalCost / quantity;
+      
+      // Display results
+      document.getElementById("artDimensions").textContent = `${artWidth}" × ${artHeight}"`;
+      document.getElementById("artQuantity").textContent = quantity.toLocaleString();
+      document.getElementById("logosPerSheet").textContent = firstSheet.logos;
+      document.getElementById("sheetsNeeded").textContent = sheetsNeeded;
+      
+      // Show individual sheet costs
+      if (sheetsNeeded === 1) {
+        document.getElementById("sheetSize").textContent = `${gangWidth}" × ${firstSheet.height}" (${firstSheet.logos} logos)`;
+        document.getElementById("costPerSheet").textContent = `$${costPerSheet.toFixed(2)}`;
+      } else {
+        const sheetBreakdown = sheetDetails.map((sheet, index) => 
+          `Sheet ${index + 1}: ${gangWidth}"×${sheet.height}" (${sheet.logos} logos) $${sheet.cost.toFixed(2)}`
+        ).join(", ");
+        document.getElementById("sheetSize").textContent = sheetBreakdown;
+        document.getElementById("costPerSheet").textContent = `$${costPerSheet.toFixed(2)} (first sheet)`;
+      }
+      
+      document.getElementById("costPerLogo").textContent = `$${costPerLogo.toFixed(3)}`;
+      document.getElementById("totalCost").textContent = `$${totalCost.toFixed(2)}`;
+
+      quoteResults.classList.remove("hidden");
+    }
+
+    // Copy quote functionality
+    document.getElementById("copyQuote").addEventListener("click", () => {
+      const artWidth = document.getElementById("artWidth").value;
+      const artHeight = document.getElementById("artHeight").value;
+      const quantity = document.getElementById("quoteQuantity").value;
+      const totalCost = document.getElementById("totalCost").textContent;
+      
+      const quoteText = `Artwork: ${artWidth}" × ${artHeight}"
+Quantity: ${quantity}
+Total Cost: ${totalCost}`;
+      
+      navigator.clipboard.writeText(quoteText).then(() => {
+        alert("Quote copied to clipboard!");
+      });
+    });
+
+    // Create gang sheet functionality
+    document.getElementById("createGangSheet").addEventListener("click", () => {
+      // Switch to gang sheet tab
+      switchTab("gangSheet");
+      // Could pre-fill the gang sheet form with the calculated values
+    });
+
+    const dropZone = document.getElementById("dropZone");
+    const dropZoneText = document.getElementById("dropZoneText");
+    const fileInput = document.getElementById("file");
+    const filePreview = document.getElementById("filePreview");
+    const fileNameDisplay = document.getElementById("fileName");
+    const pdfThumbnailCanvas = document.getElementById("pdfThumbnail");
+    const fileList = document.getElementById("fileList");
+    const fileItems = document.getElementById("fileItems");
+
+    // Store all selected files with their quantities
+    let allSelectedFiles = [];
+    let fileQuantities = {};
+
+    // ✅ Clicking drop zone triggers file picker
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    // ✅ When file selected manually
+    fileInput.addEventListener("change", () => handleFiles(fileInput.files));
+
+    // ✅ Drag over highlights the zone
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("border-blue-500", "bg-blue-50");
+    });
+
+    // ✅ Drag leave removes highlight
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("border-blue-500", "bg-blue-50");
+    });
+
+    // ✅ Dropping file assigns it
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("border-blue-500", "bg-blue-50");
+
+      if (e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+
+    // ✅ FIXED: Handle multiple files
+    function handleFiles(newFiles) {
+      if (!newFiles || newFiles.length === 0) return;
+
+      // Check file types
+      for (let file of newFiles) {
+        const fileExtension = file.name.toLowerCase().split('.').pop();
+        if (fileExtension !== 'pdf' && fileExtension !== 'png') {
+          alert("Please select only PDF or PNG files.");
+          return;
+        }
+      }
+
+      // Add new files to existing files
+      const newFileArray = Array.from(newFiles);
+      allSelectedFiles = [...allSelectedFiles, ...newFileArray];
+
+      // Check if too many files total
+      if (allSelectedFiles.length > 10) {
+        alert("Please select no more than 10 files total.");
+        allSelectedFiles = allSelectedFiles.slice(0, 10);
+      }
+
+      // Update file input
+      const dt = new DataTransfer();
+      allSelectedFiles.forEach(file => dt.items.add(file));
+      fileInput.files = dt.files;
+
+      // Show file list
+      displayFileList();
+    }
+
+    // ✅ FIXED: Display file list with preserved quantities
+    function displayFileList() {
+      if (allSelectedFiles.length === 0) {
+        fileList.classList.add("hidden");
+        dropZoneText.innerHTML = `
+          <strong>Drag & drop your files here</strong><br>
+          <span class="text-sm">Supports PDF and PNG files (max 10 files)</span>
+        `;
+        return;
+      }
+
+      fileList.classList.remove("hidden");
+      fileItems.innerHTML = "";
+
+      // Create file items
+      allSelectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement("div");
+        fileItem.className = "flex items-center justify-between bg-gray-50 border rounded-md p-3";
+        
+        // Get preserved quantity or default to empty
+        const preservedQuantity = fileQuantities[file.name] || "";
+        
+        fileItem.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <!-- PDF Thumbnail -->
+            <div class="flex-shrink-0">
+              <canvas id="preview-${index}" class="w-16 h-16 border border-gray-300 rounded bg-gray-50" 
+                data-file-index="${index}"></canvas>
+            </div>
+            
+            <!-- File Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-3">
+                <span class="text-blue-600">📄</span>
+                <span class="font-medium truncate">${file.name}</span>
+                <span class="text-gray-500 text-sm">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Controls -->
+          <div class="flex items-center space-x-2">
+            <input type="number" min="1" placeholder="Qty" value="${preservedQuantity}"
+              class="border border-gray-300 rounded px-2 py-1 w-20 text-center" 
+              name="quantity_${index}"
+              data-file-name="${file.name}" onchange="updateQuantity('${file.name}', this.value)" required />
+            
+            <button type="button" class="text-red-600 hover:text-red-800 px-2 py-1" 
+              onclick="removeFile(${index})">❌</button>
+          </div>
+        `;
+        
+        // Generate thumbnail for this file
+        generateThumbnail(file, index);
+        fileItems.appendChild(fileItem);
+      });
+
+      // Update drop zone text
+      dropZoneText.innerHTML = `
+        <strong>${allSelectedFiles.length} file(s) selected</strong><br>
+        <span class="text-sm">Drag & drop to add more files (max 10)</span>
+      `;
+    }
+
+    // ✅ NEW: Update quantity for a specific file
+    function updateQuantity(fileName, quantity) {
+      fileQuantities[fileName] = quantity;
+    }
+
+
+
+    // ✅ FIXED: Remove file function
+    function removeFile(index) {
+      const removedFile = allSelectedFiles[index];
+      
+      // Remove the file from arrays
+      allSelectedFiles.splice(index, 1);
+      delete fileQuantities[removedFile.name];
+      
+      // Update file input
+      const dt = new DataTransfer();
+      allSelectedFiles.forEach(file => dt.items.add(file));
+      fileInput.files = dt.files;
+      
+      displayFileList();
+    }
+
+    // ✅ Generate thumbnail for a PDF file
+    async function generateThumbnail(file, index) {
+      try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const typedarray = new Uint8Array(e.target.result);
+          const canvas = document.getElementById(`preview-${index}`);
+          
+          if (!canvas) return; // Canvas might not exist if file was removed
+          
+          const context = canvas.getContext("2d");
+          
+          try {
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            const page = await pdf.getPage(1);
+            
+            // Calculate scale to fit in 64x64 thumbnail while maintaining aspect ratio
+            const viewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(64 / viewport.width, 64 / viewport.height);
+            const scaledViewport = page.getViewport({ scale: scale });
+            
+            canvas.width = 64;
+            canvas.height = 64;
+            
+            // Clear canvas with light background
+            context.fillStyle = '#f9fafb';
+            context.fillRect(0, 0, 64, 64);
+            
+            // Center the PDF content
+            const offsetX = (64 - scaledViewport.width) / 2;
+            const offsetY = (64 - scaledViewport.height) / 2;
+            
+            const renderContext = {
+              canvasContext: context,
+              viewport: scaledViewport,
+              transform: [1, 0, 0, 1, offsetX, offsetY]
+            };
+            
+            await page.render(renderContext).promise;
+          } catch (error) {
+            // If PDF rendering fails, show a placeholder
+            context.fillStyle = '#e5e7eb';
+            context.fillRect(0, 0, 64, 64);
+            context.fillStyle = '#6b7280';
+            context.font = '12px Arial';
+            context.textAlign = 'center';
+            context.fillText('PDF', 32, 32);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        console.error('Error generating thumbnail:', error);
+      }
+    }
+
+    // ✅ Keep original single file handling for now
+    function handleFile(files) {
+      if (!files || files.length === 0) return;
+
+      const file = files[0];
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      
+      if (fileExtension !== 'pdf' && fileExtension !== 'png') {
+        alert("Please select a PDF or PNG file.");
+        return;
+      }
+
+      fileNameDisplay.textContent = `✅ Selected: ${file.name}`;
+      filePreview.classList.remove("hidden");
+
+      // ✅ Show thumbnail (PDF.js for PDFs, canvas for PNGs)
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        if (fileExtension === 'pdf') {
+          // Show PDF thumbnail using PDF.js
+          const typedarray = new Uint8Array(e.target.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          const page = await pdf.getPage(1);
+
+          const viewport = page.getViewport({ scale: 0.3 }); // Small preview
+          const context = pdfThumbnailCanvas.getContext("2d");
+
+          pdfThumbnailCanvas.width = viewport.width;
+          pdfThumbnailCanvas.height = viewport.height;
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+          };
+          await page.render(renderContext).promise;
+        } else {
+          // Show PNG thumbnail using canvas
+          const img = new Image();
+          img.onload = function() {
+            const context = pdfThumbnailCanvas.getContext("2d");
+            const scale = 0.3; // Small preview
+            pdfThumbnailCanvas.width = img.width * scale;
+            pdfThumbnailCanvas.height = img.height * scale;
+            context.drawImage(img, 0, 0, pdfThumbnailCanvas.width, pdfThumbnailCanvas.height);
+          };
+          img.src = e.target.result;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ✅ ENHANCED: Process all files
+    const form = document.getElementById("uploadForm");
+    const logDiv = document.getElementById("log");
+    const generateBtn = document.getElementById("generateBtn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      console.log("Form submitted!"); // Debug log
+
+      if (allSelectedFiles.length === 0) {
+        alert("Please select at least one file.");
+        return;
+      }
+
+      console.log("Files selected:", allSelectedFiles.length); // Debug log
+
+      // Check if all files have quantities
+      const missingQuantities = allSelectedFiles.filter(file => !fileQuantities[file.name] || fileQuantities[file.name] === "");
+      if (missingQuantities.length > 0) {
+        alert("Please enter quantities for all files.");
+        return;
+      }
+
+      console.log("All quantities entered"); // Debug log
+
+      generateBtn.disabled = true;
+      generateBtn.classList.add("opacity-70", "cursor-not-allowed");
+      generateBtn.textContent = "Processing...";
+
+      logDiv.innerHTML = `
+        <div class="flex flex-col items-center justify-center text-gray-700">
+          <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mb-3"></div>
+          <p class="font-semibold text-sm text-gray-600">Processing ${allSelectedFiles.length} files...</p>
+        </div>
+      `;
+
+      const rotate = document.getElementById("rotate").value;
+      const gangWidth = document.getElementById("gangWidth").value;
+      const maxLength = document.getElementById("maxLength").value;
+
+      let allResults = [];
+      let totalCost = 0;
+
+      try {
+        // ✅ NEW: Process all files together with consolidation
+        console.log(`Processing ${allSelectedFiles.length} files with consolidation`); // Debug log
+
+        // Update progress
+        logDiv.innerHTML = `
+          <div class="flex flex-col items-center justify-center text-gray-700">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mb-3"></div>
+            <p class="font-semibold text-sm text-gray-600">Processing ${allSelectedFiles.length} files with consolidation</p>
+            <p class="text-xs text-gray-500 mt-1">Optimizing sheet usage...</p>
+          </div>
+        `;
+
+        const formData = new FormData();
+        
+        // Add all files
+        allSelectedFiles.forEach(file => {
+          formData.append("files", file);
+        });
+        
+        // Add quantities as JSON array
+        const quantities = allSelectedFiles.map(file => fileQuantities[file.name]);
+        formData.append("quantities", JSON.stringify(quantities));
+        
+        // Add other parameters
+        formData.append("rotate", rotate);
+        formData.append("gangWidth", gangWidth);
+        formData.append("maxLength", maxLength);
+
+        const response = await fetch("/merge-consolidated", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        allResults = data.sheets;
+        totalCost = data.totalCost;
+
+        console.log("All files processed successfully"); // Debug log
+
+        // Display results
+        let html = `
+          <div class="flex items-center justify-center gap-2 mb-4 animate-fadeIn">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <p class="text-green-700 font-semibold">All sheets ready!</p>
+          </div>
+
+          <div class="bg-white shadow-md rounded-lg p-4 animate-fadeIn">
+            <h3 class="text-lg font-bold mb-3">
+              ✅ ${allResults.length} total sheet(s) generated for ${allSelectedFiles.length} files
+            </h3>
+            <ul class="space-y-2">
+        `;
+
+        allResults.forEach((s) => {
+          html += `
+            <li class="flex justify-between items-center bg-gray-50 border rounded-md p-3">
+              <div>
+                📄 <span class="font-medium">${s.filename}</span>
+                <span class="text-green-600 font-semibold ml-2"> $${s.cost.toFixed(2)}</span>
+              </div>
+              <a href="data:application/pdf;base64,${s.pdfBase64}" download="${s.filename}" class="text-blue-600 hover:underline">
+                 ⬇️ Download
+              </a>
+            </li>
+          `;
+        });
+
+        html += `</ul>
+          <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-center">
+            <span class="block text-sm text-gray-600">Total Summary</span>
+            <span class="text-xl font-bold text-green-700">
+              Total Cost: $${totalCost.toFixed(2)}
+            </span>
+          </div>
+          <button id="downloadAll" 
+            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
+            ⬇️ Download All Sheets
+          </button>
+          </div>
+        `;
+
+        logDiv.innerHTML = html;
+
+        generateBtn.disabled = false;
+        generateBtn.classList.remove("opacity-70", "cursor-not-allowed");
+        generateBtn.textContent = "Generate All Gang Sheets";
+
+        document.getElementById("downloadAll").addEventListener("click", () => {
+          allResults.forEach((s) => {
+            const a = document.createElement("a");
+            a.href = `data:application/pdf;base64,${s.pdfBase64}`;
+            a.download = s.filename;
+            a.click();
+          });
+        });
+
+      } catch (error) {
+        console.error("Error:", error); // Debug log
+        logDiv.innerHTML = `
+          <div class="text-center text-red-600 font-semibold p-4 bg-red-50 border border-red-200 rounded-lg">
+            ❌ Error: ${error.message}
+          </div>
+        `;
+        generateBtn.disabled = false;
+        generateBtn.classList.remove("opacity-70", "cursor-not-allowed");
+        generateBtn.textContent = "Generate All Gang Sheets";
+      }
+    });
+  </script>
+
+  <style>
+    .animate-fadeIn {
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+</body>
+</html> 
