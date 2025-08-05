@@ -3,6 +3,9 @@ import multer from "multer";
 import { PDFDocument, degrees } from "pdf-lib";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import session from "express-session";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +16,36 @@ const port = process.env.PORT || 8080;
 // Production-ready middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static("public"));
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false } // Set to true in production with HTTPS
+}));
+
+// In-memory user storage (replace with database in production)
+const users = new Map();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // Enhanced multer configuration with file size limits and validation
 const upload = multer({
@@ -527,6 +560,146 @@ app.post("/merge", upload.single("file"), async (req, res) => {
     console.error("MERGE ERROR:", err);
     res.status(500).send(`Server error: ${err.message}`);
   }
+});
+
+// Authentication Routes
+app.post('/api/register', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, company, plan } = req.body;
+
+    // Basic validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: 'All required fields must be provided' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    // Check if user already exists
+    if (users.has(email)) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = {
+      id: Date.now().toString(),
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      company: company || '',
+      plan: plan || 'free',
+      createdAt: new Date().toISOString()
+    };
+
+    users.set(email, user);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, plan: user.plan },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        company: user.company,
+        plan: user.plan
+      }
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = users.get(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, plan: user.plan },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        company: user.company,
+        plan: user.plan
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/profile', authenticateToken, (req, res) => {
+  try {
+    const user = users.get(req.user.email);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        company: user.company,
+        plan: user.plan,
+        createdAt: user.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 app.listen(port, () => {
