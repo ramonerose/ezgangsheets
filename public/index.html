@@ -231,12 +231,7 @@
                         <h2 class="text-2xl font-bold text-gray-900 mb-2">DTF Gang Sheet Generator</h2>
                         <p class="text-gray-600">Upload your PDF files and generate optimized gang sheets instantly</p>
                     </div>
-                    <button id="settingsBtn" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition ml-4">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </button>
+
                 </div>
 
         <!-- ✅ Tab Navigation -->
@@ -248,6 +243,9 @@
               </button>
               <button id="quoteTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
                 Cost Calculator
+              </button>
+              <button id="settingsTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
+                Settings
               </button>
             </nav>
           </div>
@@ -460,6 +458,91 @@
           </div>
         </div>
 
+        <!-- ✅ Settings Tab -->
+        <div id="settingsContent" class="tab-content hidden">
+          <div class="bg-white shadow-md rounded-lg p-6 pt-10 max-w-4xl mx-auto">
+            <div class="mb-6">
+              <h2 class="text-xl font-bold text-gray-900 mb-2">Settings</h2>
+              <p class="text-gray-600">Customize your cost tables and preferences</p>
+            </div>
+
+            <!-- Appearance Settings -->
+            <div class="mb-8">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Appearance</h3>
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Dark Mode</label>
+                  <p class="text-xs text-gray-500">Switch between light and dark themes</p>
+                </div>
+                <button id="darkModeToggle" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
+                  <span class="sr-only">Toggle dark mode</span>
+                  <span id="darkModeSlider" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Cost Table Settings -->
+            <div class="mb-8">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Cost Tables</h3>
+                <button id="costTableToggle" class="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                  <span id="costTableToggleText">Show</span>
+                  <svg id="costTableToggleIcon" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Collapsible Cost Table Content -->
+              <div id="costTableContent" class="hidden border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <!-- Width Selection -->
+                <div class="mb-4">
+                  <label class="block font-medium mb-2 text-gray-700">Gang Sheet Width</label>
+                  <select id="settingsWidthSelect" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="22" selected>22 inches</option>
+                    <option value="30">30 inches</option>
+                  </select>
+                </div>
+
+                <!-- Height Tiers -->
+                <div class="mb-4">
+                  <label class="block font-medium mb-2 text-gray-700">Height Tiers (inches)</label>
+                  <div id="heightTiersContainer" class="space-y-2">
+                    <!-- Height tiers will be populated here -->
+                  </div>
+                  <div class="mt-3 flex space-x-2">
+                    <button id="addHeightTier" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                      Add Height Tier
+                    </button>
+                    <button id="removeHeightTier" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                      Remove Last Tier
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success Message -->
+            <div id="settingsSuccess" class="hidden mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+              Settings saved successfully!
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex space-x-3">
+              <button id="saveSettingsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                Save Settings
+              </button>
+              <button id="exportSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                Export Settings
+              </button>
+              <button id="importSettingsBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                Import Settings
+              </button>
+              <input type="file" id="importSettingsFile" class="hidden" accept=".json">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ✅ PDF.js (for thumbnail rendering) -->
@@ -469,11 +552,14 @@
         // Tab switching functionality
         const gangSheetTab = document.getElementById("gangSheetTab");
         const quoteTab = document.getElementById("quoteTab");
+        const settingsTab = document.getElementById("settingsTab");
         const gangSheetContent = document.getElementById("gangSheetContent");
         const quoteContent = document.getElementById("quoteContent");
+        const settingsContent = document.getElementById("settingsContent");
 
         gangSheetTab.addEventListener("click", () => switchTab("gangSheet"));
         quoteTab.addEventListener("click", () => switchTab("quote"));
+        settingsTab.addEventListener("click", () => switchTab("settings"));
 
         function switchTab(tabName) {
           // Update tab buttons
@@ -492,10 +578,15 @@
             gangSheetTab.classList.remove("border-transparent", "text-gray-500");
             gangSheetTab.classList.add("border-blue-500", "text-blue-600");
             gangSheetContent.classList.remove("hidden");
-          } else {
+          } else if (tabName === "quote") {
             quoteTab.classList.remove("border-transparent", "text-gray-500");
             quoteTab.classList.add("border-blue-500", "text-blue-600");
             quoteContent.classList.remove("hidden");
+          } else if (tabName === "settings") {
+            settingsTab.classList.remove("border-transparent", "text-gray-500");
+            settingsTab.classList.add("border-blue-500", "text-blue-600");
+            settingsContent.classList.remove("hidden");
+            populateSettings(); // Load settings when tab is opened
           }
         }
 
@@ -1145,7 +1236,7 @@ Total Cost: ${totalCost}`;
                 <span class="text-xl font-bold text-green-700">
                   Total Cost: $${(totalCost || 0).toFixed(2)}
                 </span>
-                <p class="text-xs italic text-gray-500 mt-2">Customize your cost tables by clicking the settings icon at the top right of this tool</p>
+                <p class="text-xs italic text-gray-500 mt-2">Adjust pricing in the Settings tab above.</p>
               </div>
               <button id="downloadAll" 
                 class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
@@ -1230,84 +1321,7 @@ Total Cost: ${totalCost}`;
         }
       </script>
 
-      <!-- Settings Modal -->
-      <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-bold text-gray-900">Settings</h2>
-              <button id="closeSettingsBtn" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
 
-            <!-- Appearance Settings -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold mb-4">Appearance</h3>
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <label class="text-sm font-medium text-gray-700">Dark Mode</label>
-                  <p class="text-xs text-gray-500">Switch between light and dark themes</p>
-                </div>
-                <button id="darkModeToggle" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
-                  <span class="sr-only">Toggle dark mode</span>
-                  <span id="darkModeSlider" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Width Selection -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold mb-4">DTF Transfer Costs</h3>
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Select Gang Sheet Width</label>
-                <select id="settingsWidthSelect" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                  <option value="22">22 inches</option>
-                  <option value="30">30 inches</option>
-                </select>
-              </div>
-              <p class="text-sm text-gray-600 mb-4">
-                Configure costs for <span id="selectedWidthText">22"</span> width sheets. Add or remove height tiers to match your supplier's pricing structure.
-              </p>
-              
-              <!-- Height Tier Management -->
-              <div class="mb-4">
-                <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-md font-medium text-gray-700">Height Tiers</h4>
-                  <button id="addHeightBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-                    + Add Height
-                  </button>
-                </div>
-                <div id="heightTiersContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  <!-- Height tiers will be populated here -->
-                </div>
-              </div>
-            </div>
-
-
-
-            <!-- Success Message -->
-            <div id="settingsSuccess" class="hidden mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
-              Settings saved successfully!
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-3">
-              <button id="saveSettingsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Save Settings
-              </button>
-              <button id="exportSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Export Settings
-              </button>
-              <button id="importSettingsBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Import Settings
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <style>
         .animate-fadeIn {
@@ -1320,13 +1334,7 @@ Total Cost: ${totalCost}`;
       </style>
 
       <script>
-        // Settings Modal Functionality
-        const settingsBtn = document.getElementById("settingsBtn");
-        const settingsModal = document.getElementById("settingsModal");
-        const closeSettingsBtn = document.getElementById("closeSettingsBtn");
-        const saveSettingsBtn = document.getElementById("saveSettingsBtn");
-        const exportSettingsBtn = document.getElementById("exportSettingsBtn");
-        const importSettingsBtn = document.getElementById("importSettingsBtn");
+
 
         // Default cost tables for each width (empty by default)
         const defaultCostTables = {
@@ -1413,8 +1421,11 @@ Total Cost: ${totalCost}`;
           const selectedWidth = widthSelect.value;
           const costTable = costTables[selectedWidth];
           
-          // Update the description text
-          document.getElementById("selectedWidthText").textContent = `${selectedWidth}"`;
+          // Update the description text (if element exists)
+          const selectedWidthText = document.getElementById("selectedWidthText");
+          if (selectedWidthText) {
+            selectedWidthText.textContent = `${selectedWidth}"`;
+          }
           
           // Populate height tiers dynamically
           populateHeightTiers(costTable);
@@ -1427,6 +1438,20 @@ Total Cost: ${totalCost}`;
           
           // Sort heights numerically
           const heights = Object.keys(costTable).map(Number).sort((a, b) => a - b);
+          
+          if (heights.length === 0) {
+            // Show message when no height tiers are configured
+            container.innerHTML = `
+              <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="text-sm font-medium">No height tiers configured</p>
+                <p class="text-xs mt-1">Click "Add Height Tier" to get started</p>
+              </div>
+            `;
+            return;
+          }
           
           heights.forEach(height => {
             const tierDiv = document.createElement('div');
@@ -1500,37 +1525,45 @@ Total Cost: ${totalCost}`;
           return { costTables };
         }
 
-        // Open settings modal
-        settingsBtn.addEventListener("click", () => {
-          populateSettings();
-          settingsModal.classList.remove("hidden");
-        });
-
-        // Handle width selector change
+        // Handle width selector change in Settings tab
         document.getElementById("settingsWidthSelect").addEventListener("change", () => {
           populateSettings();
         });
 
-        // Handle add height button
-        document.getElementById("addHeightBtn").addEventListener("click", addHeightTier);
-
         // Handle dark mode toggle
         document.getElementById("darkModeToggle").addEventListener("click", toggleDarkMode);
 
-        // Close settings modal
-        closeSettingsBtn.addEventListener("click", () => {
-          settingsModal.classList.add("hidden");
-        });
-
-        // Close modal when clicking outside
-        settingsModal.addEventListener("click", (e) => {
-          if (e.target === settingsModal) {
-            settingsModal.classList.add("hidden");
+        // Handle cost table toggle
+        document.getElementById("costTableToggle").addEventListener("click", () => {
+          const content = document.getElementById("costTableContent");
+          const toggleText = document.getElementById("costTableToggleText");
+          const toggleIcon = document.getElementById("costTableToggleIcon");
+          
+          if (content.classList.contains("hidden")) {
+            content.classList.remove("hidden");
+            toggleText.textContent = "Hide";
+            toggleIcon.style.transform = "rotate(180deg)";
+          } else {
+            content.classList.add("hidden");
+            toggleText.textContent = "Show";
+            toggleIcon.style.transform = "rotate(0deg)";
           }
         });
 
-        // Save settings
-        saveSettingsBtn.addEventListener("click", () => {
+        // Settings Tab Event Listeners
+        document.getElementById("addHeightTier").addEventListener("click", addHeightTier);
+        document.getElementById("removeHeightTier").addEventListener("click", () => {
+          const settings = loadSettings();
+          const widthSelect = document.getElementById("settingsWidthSelect");
+          const selectedWidth = widthSelect.value;
+          const costTable = settings.costTables[selectedWidth];
+          const heights = Object.keys(costTable).map(Number).sort((a, b) => a - b);
+          if (heights.length > 0) {
+            removeHeightTier(heights[heights.length - 1]);
+          }
+        });
+
+        document.getElementById("saveSettingsBtn").addEventListener("click", () => {
           const settings = updateSettings();
           saveSettings(settings);
           
@@ -1542,8 +1575,7 @@ Total Cost: ${totalCost}`;
           }, 2000);
         });
 
-        // Export settings
-        exportSettingsBtn.addEventListener("click", () => {
+        document.getElementById("exportSettingsBtn").addEventListener("click", () => {
           const settings = loadSettings();
           const dataStr = JSON.stringify(settings, null, 2);
           const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1554,46 +1586,41 @@ Total Cost: ${totalCost}`;
           link.click();
         });
 
-        // Import settings
-        importSettingsBtn.addEventListener("click", () => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.json';
-          
-          input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                try {
-                  const settings = JSON.parse(e.target.result);
-                  if (settings.costTable || settings.costTables) {
-                    // Ensure costTables exist for backward compatibility
-                    if (!settings.costTables) {
-                      settings.costTables = {
-                        22: settings.costTable,
-                        30: defaultCostTables[30]
-                      };
-                    }
-                    saveSettings(settings);
-                    populateSettings();
-                    
-                    const successMsg = document.getElementById("settingsSuccess");
-                    successMsg.textContent = "Settings imported successfully!";
-                    successMsg.classList.remove("hidden");
-                    setTimeout(() => {
-                      successMsg.classList.add("hidden");
-                    }, 2000);
+        document.getElementById("importSettingsBtn").addEventListener("click", () => {
+          document.getElementById("importSettingsFile").click();
+        });
+
+        document.getElementById("importSettingsFile").addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const settings = JSON.parse(e.target.result);
+                if (settings.costTable || settings.costTables) {
+                  // Ensure costTables exist for backward compatibility
+                  if (!settings.costTables) {
+                    settings.costTables = {
+                      22: settings.costTable,
+                      30: defaultCostTables[30]
+                    };
                   }
-                } catch (error) {
-                  alert("Invalid settings file. Please try again.");
+                  saveSettings(settings);
+                  populateSettings();
+                  
+                  const successMsg = document.getElementById("settingsSuccess");
+                  successMsg.textContent = "Settings imported successfully!";
+                  successMsg.classList.remove("hidden");
+                  setTimeout(() => {
+                    successMsg.classList.add("hidden");
+                  }, 2000);
                 }
-              };
-              reader.readAsText(file);
-            }
-          };
-          
-          input.click();
+              } catch (error) {
+                alert("Invalid settings file. Please try again.");
+              }
+            };
+            reader.readAsText(file);
+          }
         });
 
         // Initialize settings on page load
