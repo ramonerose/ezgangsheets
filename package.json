@@ -1,25 +1,27 @@
 {
   "name": "ezgangsheets",
   "version": "1.0.0",
-  "description": "EZGangSheets - DTF Gang Sheet Generator",
+  "description": "DTF Gang Sheet Generator",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "node index.js",
+    "build": "echo 'No build step required'",
+    "test": "echo 'No tests specified'"
   },
+  "keywords": ["dtf", "gang-sheets", "pdf", "printing"],
+  "author": "EZGangSheets",
+  "license": "MIT",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "express-session": "^1.18.2",
-    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "pdf-lib": "^1.17.1",
-    "sharp": "^0.34.3",
-    "stripe": "^18.4.0"
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-session": "^1.17.3"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

@@ -171,14 +171,13 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    <a href="index.html" class="hover:opacity-80 transition-opacity">
+                        <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    </a>
                 </div>
                 <div class="flex items-center space-x-8">
-                    <nav class="hidden md:flex items-center space-x-8">
-                        <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
-                        <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
-                        <a href="login.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Login</a>
-                        <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                    <nav id="mainNav" class="hidden md:flex items-center space-x-8">
+                        <!-- Navigation will be populated by JavaScript -->
                     </nav>
                 </div>
             </div>
@@ -231,8 +230,9 @@
                         <h2 class="text-2xl font-bold text-gray-900 mb-2">DTF Gang Sheet Generator</h2>
                         <p class="text-gray-600">Upload your PDF files and generate optimized gang sheets instantly</p>
                     </div>
-
                 </div>
+                
+
 
         <!-- ✅ Tab Navigation -->
         <div class="bg-white shadow-md rounded-lg mb-6">
@@ -1111,6 +1111,27 @@ Total Cost: ${totalCost}`;
 
           console.log("All quantities entered"); // Debug log
 
+          // Check if user is logged in
+          const token = localStorage.getItem('authToken');
+          if (!token) {
+            // Show login prompt
+            const loginPrompt = `
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+                <svg class="w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-blue-800 mb-2">Login Required</h3>
+                <p class="text-blue-700 mb-4">Please create a free account or log in to generate gang sheets.</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a href="register.html" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">Create Free Account</a>
+                  <a href="login.html" class="border border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition">Log In</a>
+                </div>
+              </div>
+            `;
+            logDiv.innerHTML = loginPrompt;
+            return;
+          }
+
           // Show progress indicator and hide generate button
           const progressIndicator = document.getElementById("progressIndicator");
           const generateBtn = document.getElementById("generateBtn");
@@ -1161,12 +1182,23 @@ Total Cost: ${totalCost}`;
 
             updateProgress("Uploading files...", 30, "Sending files to server for processing");
 
+            const token = localStorage.getItem('authToken');
+            const headers = {};
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch("/merge-consolidated", {
               method: "POST",
+              headers: headers,
               body: formData
             });
 
             if (!response.ok) {
+              if (response.status === 429) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Download limit reached');
+              }
               throw new Error(`Server error: ${response.status}`);
             }
 
@@ -1176,6 +1208,7 @@ Total Cost: ${totalCost}`;
             
             allResults = data.sheets;
             totalCost = data.totalCost;
+            userPlan = data.userPlan || 'free';
 
             console.log("All files processed successfully"); // Debug log
 
@@ -1203,7 +1236,7 @@ Total Cost: ${totalCost}`;
                   <div class="flex justify-between items-center mb-2">
                     <div>
                       📄 <span class="font-medium">${s.filename}</span>
-                      <span class="text-green-600 font-semibold ml-2"> $${(s.cost || 0).toFixed(2)}</span>
+                      ${userPlan === 'pro' ? `<span class="text-green-600 font-semibold ml-2"> $${(s.cost || 0).toFixed(2)}</span>` : `<span class="text-blue-600 text-xs ml-2">Pro Feature</span>`}
                     </div>
                     <button onclick="editFilename(${index})" class="text-gray-500 hover:text-blue-600 text-sm">
                       ✏️ Edit Name
@@ -1231,6 +1264,7 @@ Total Cost: ${totalCost}`;
             });
 
                           html += `</ul>
+              ${userPlan === 'pro' ? `
               <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-center">
                 <span class="block text-sm text-gray-600">Total Summary</span>
                 <span class="text-xl font-bold text-green-700">
@@ -1238,6 +1272,18 @@ Total Cost: ${totalCost}`;
                 </span>
                 <p class="text-xs italic text-gray-500 mt-2">Adjust pricing in the Settings tab above.</p>
               </div>
+              ` : `
+              <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
+                <div class="flex items-center justify-center mb-2">
+                  <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="text-sm font-medium text-blue-800">Pro Feature</span>
+                </div>
+                <p class="text-sm text-blue-700 mb-2">Cost calculation is available with a Pro subscription.</p>
+                <a href="pricing.html" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Upgrade to Pro →</a>
+              </div>
+              `}
               <button id="downloadAll" 
                 class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
                 ⬇️ Download All Sheets
@@ -1387,6 +1433,17 @@ Total Cost: ${totalCost}`;
         // Load saved settings or use defaults
         function loadSettings() {
           const saved = localStorage.getItem('ezgangsheets_settings');
+          
+          // For non-logged-in users, always start with blank tables
+          if (typeof currentUser === 'undefined' || !currentUser) {
+            return { 
+              costTables: {
+                22: {},
+                30: {}
+              }
+            };
+          }
+          
           if (saved) {
             const settings = JSON.parse(saved);
             // Ensure backward compatibility
@@ -1403,8 +1460,12 @@ Total Cost: ${totalCost}`;
             }
             return settings;
           }
+          // Start with blank cost tables for new users
           return { 
-            costTables: defaultCostTables
+            costTables: {
+              22: {},
+              30: {}
+            }
           };
         }
 
@@ -1459,7 +1520,7 @@ Total Cost: ${totalCost}`;
             tierDiv.innerHTML = `
               <label class="block text-sm font-medium text-gray-700 mb-1">${height}" height</label>
               <div class="flex">
-                <input type="number" id="cost-${height}" step="0.01" min="0" value="${costTable[height]}" 
+                <input type="number" id="cost-${height}" step="0.01" min="0" value="${parseFloat(costTable[height] || 0).toFixed(2)}" 
                        class="w-full border border-gray-300 rounded-l-md px-3 py-2 text-sm">
                 <button type="button" onclick="removeHeightTier(${height})" 
                         class="bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-800 border border-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-300 dark:hover:text-white dark:border-gray-300 px-2 py-2 rounded-r-md text-sm transition-colors">
@@ -1477,15 +1538,36 @@ Total Cost: ${totalCost}`;
         function addHeightTier() {
           const height = prompt("Enter height in inches (e.g., 12, 24, 36):");
           if (height && !isNaN(height) && height > 0) {
+            // Get current settings from localStorage
             const settings = loadSettings();
             const widthSelect = document.getElementById("settingsWidthSelect");
             const selectedWidth = widthSelect.value;
             
+            // Check if height already exists
+            if (settings.costTables[selectedWidth][height]) {
+              alert(`Height tier ${height}" already exists. Please choose a different height.`);
+              return;
+            }
+            
+            // Capture current cost inputs before adding new tier
+            const costInputs = document.querySelectorAll('#heightTiersContainer [id^="cost-"]');
+            costInputs.forEach(input => {
+              const heightKey = input.id.replace('cost-', '');
+              const value = parseFloat(input.value) || 0;
+              settings.costTables[selectedWidth][heightKey] = value;
+            });
+            
             // Add the new height tier with a default cost
             settings.costTables[selectedWidth][height] = 0;
             
+            // Save the settings immediately
+            saveSettings(settings);
+            
             // Re-populate the display
             populateHeightTiers(settings.costTables[selectedWidth]);
+            
+            console.log(`Added height tier: ${height}" for width ${selectedWidth}"`);
+            console.log('Current settings:', settings.costTables[selectedWidth]);
           }
         }
 
@@ -1497,6 +1579,9 @@ Total Cost: ${totalCost}`;
             const selectedWidth = widthSelect.value;
             
             delete settings.costTables[selectedWidth][height];
+            
+            // Save the settings immediately (for removal, we want to persist this change)
+            saveSettings(settings);
             
             // Re-populate the display
             populateHeightTiers(settings.costTables[selectedWidth]);
@@ -1515,11 +1600,8 @@ Total Cost: ${totalCost}`;
           costInputs.forEach(input => {
             const height = input.id.replace('cost-', '');
             const value = parseFloat(input.value) || 0;
-            if (value > 0) { // Only save non-zero values
-              costTables[selectedWidth][height] = value;
-            } else {
-              delete costTables[selectedWidth][height]; // Remove zero values
-            }
+            // Save all values, including zero (don't delete tiers with zero cost)
+            costTables[selectedWidth][height] = value;
           });
           
           return { costTables };
@@ -1674,98 +1756,58 @@ Total Cost: ${totalCost}`;
         </div>
     </section>
 
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-16 bg-gray-50">
+    <!-- CTA Section -->
+    <section id="cta" class="py-16 bg-gray-50">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Pricing</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div class="bg-white rounded-lg shadow-md p-8 text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Free Tier</h3>
-                    <p class="text-gray-600 mb-6">Perfect for small projects and beginners.</p>
-                    <ul class="space-y-4 mb-6">
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Ready to Transform Your DTF Workflow?</h2>
+                <p class="text-xl text-gray-600 mb-8">Stop wasting time on manual gang sheet layouts. Get optimized results in minutes, not hours.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Unlimited file uploads
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Buy Back Your Time</h3>
+                        <p class="text-gray-600 text-sm">Spend seconds, not hours. Our tool builds your gang sheets so you can focus on printing and profit.</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
-                            Basic cost calculations
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Streamline Your Workflow</h3>
+                        <p class="text-gray-600 text-sm">From upload to gang sheet in seconds — no dragging, dropping, or second-guessing.</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Limited customization
-                        </li>
-                    </ul>
-                    <button class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                        Get Started for Free
-                    </button>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Smart Layouts, Done for You</h3>
+                        <p class="text-gray-600 text-sm">No more manual arranging — just upload, set quantities, and let it work.</p>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg shadow-md p-8 text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Pro Plan</h3>
-                    <p class="text-gray-600 mb-6">For professional users and large-scale projects.</p>
-                    <ul class="space-y-4 mb-6">
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Unlimited file uploads
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
-                            </svg>
-                            Advanced cost calculations
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                            </svg>
-                            Custom cost tables
-                        </li>
-                    </ul>
-                    <button class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                        Upgrade to Pro
-                    </button>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="register.html" class="inline-flex items-center bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                        Start Free Trial
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </a>
+                    <a href="pricing.html" class="inline-flex items-center border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg hover:bg-blue-50 transition font-semibold">
+                        View Pricing
+                    </a>
                 </div>
-                <div class="bg-white rounded-lg shadow-md p-8 text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
-                    <p class="text-gray-600 mb-6">For large organizations and complex DTF operations.</p>
-                    <ul class="space-y-4 mb-6">
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Unlimited file uploads
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
-                            </svg>
-                            Advanced cost calculations
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                            </svg>
-                            Custom cost tables
-                        </li>
-                        <li class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6-4l2 2 4-4"/>
-                            </svg>
-                            Dedicated support
-                        </li>
-                    </ul>
-                    <button class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                        Contact Sales
-                    </button>
-                </div>
+                
+                <p class="text-sm text-gray-500 mt-4">No credit card required • 5 free downloads per month • Upgrade anytime</p>
             </div>
         </div>
     </section>
@@ -1782,16 +1824,16 @@ Total Cost: ${totalCost}`;
                 <ul class="space-y-3">
                     <li><a href="features.html" class="text-gray-400 hover:text-white transition">Features</a></li>
                     <li><a href="pricing.html" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
+
+                    <li><a href="contact.html" class="text-gray-400 hover:text-white transition">Contact</a></li>
                 </ul>
             </div>
             <div>
                 <h3 class="text-xl font-bold text-white mb-4">Legal</h3>
                 <ul class="space-y-3">
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                    <li><a href="privacy-policy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                    <li><a href="cookie-policy.html" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
                 </ul>
             </div>
             <div>
@@ -1814,9 +1856,10 @@ Total Cost: ${totalCost}`;
     <script>
         // Authentication check and user management
         let currentUser = null;
+        let userPlan = 'free';
         
-        // Check if user is logged in on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is logged in immediately
+        (function() {
             const token = localStorage.getItem('authToken');
             const user = localStorage.getItem('user');
             
@@ -1824,41 +1867,70 @@ Total Cost: ${totalCost}`;
                 try {
                     currentUser = JSON.parse(user);
                     updateNavigationForUser();
+                    checkUserPlan();
+                    // Initialize settings after user is loaded
+                    populateSettings();
                 } catch (error) {
                     console.error('Error parsing user data:', error);
                     logout();
                 }
             } else {
+                currentUser = null;
+                userPlan = 'free';
                 updateNavigationForGuest();
+                checkUserPlan();
+                // Initialize settings for guest users
+                populateSettings();
             }
-        });
+            
+
+        })();
         
         function updateNavigationForUser() {
-            const nav = document.querySelector('nav');
+            const nav = document.getElementById('mainNav');
             if (nav) {
                 nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
                     <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
                     <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    ${currentUser.email === 'admin@ezgangsheets.com' ? '<a href="admin.html" class="text-blue-600 font-medium dark:text-blue-400">Admin</a>' : ''}
                     <div class="relative group">
-                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
+                        <button id="userDropdownBtn" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
                             ${currentUser.firstName} ${currentUser.lastName}
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                        <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
                             <hr class="my-1">
                             <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
                         </div>
                     </div>
                 `;
+                
+                // Add dropdown functionality
+                const dropdownBtn = document.getElementById('userDropdownBtn');
+                const dropdown = document.getElementById('userDropdown');
+                
+                if (dropdownBtn && dropdown) {
+                    dropdownBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        dropdown.classList.toggle('hidden');
+                    });
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!dropdownBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+                }
             }
         }
         
         function updateNavigationForGuest() {
-            const nav = document.querySelector('nav');
+            const nav = document.getElementById('mainNav');
             if (nav) {
                 nav.innerHTML = `
                     <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
@@ -1873,8 +1945,288 @@ Total Cost: ${totalCost}`;
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
             currentUser = null;
+            userPlan = 'free';
             updateNavigationForGuest();
             window.location.reload();
+        }
+        
+        // Check user plan and gate features accordingly
+        async function checkUserPlan() {
+            const token = localStorage.getItem('authToken');
+            
+            if (token) {
+                try {
+                    const response = await fetch('/api/plan', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    userPlan = data.plan;
+                    
+                    // Show download limit info for free users
+                    if (data.downloadLimit) {
+                        showDownloadLimitInfo(data.downloadLimit);
+                    }
+                } catch (error) {
+                    console.error('Error checking user plan:', error);
+                    userPlan = 'free';
+                }
+            } else {
+                userPlan = 'free';
+            }
+            
+            // Gate features based on plan
+            gateFeatures();
+        }
+        
+        // Temporary function to test free user mode (remove in production)
+        function testFreeUserMode() {
+            userPlan = 'free';
+            currentUser = null;
+            gateFeatures();
+            console.log('Switched to free user mode for testing');
+            console.log('Current userPlan:', userPlan);
+            console.log('Current user:', currentUser);
+        }
+        
+        // Debug function to check current state
+        function debugState() {
+            console.log('=== DEBUG STATE ===');
+            console.log('userPlan:', userPlan);
+            console.log('currentUser:', currentUser);
+            console.log('authToken:', localStorage.getItem('authToken'));
+            console.log('user data:', localStorage.getItem('user'));
+            
+            const costCalculatorTab = document.getElementById('quoteTab');
+            const costTablesSection = document.getElementById('costTableContent');
+            
+            console.log('Cost Calculator Tab:', costCalculatorTab);
+            console.log('Cost Tables Section:', costTablesSection);
+            
+            if (costCalculatorTab) {
+                console.log('Cost Calculator Tab opacity:', costCalculatorTab.style.opacity);
+                console.log('Cost Calculator Tab pointer-events:', costCalculatorTab.style.pointerEvents);
+            }
+            
+            if (costTablesSection) {
+                console.log('Cost Tables Section opacity:', costTablesSection.style.opacity);
+                console.log('Cost Tables Section pointer-events:', costTablesSection.style.pointerEvents);
+            }
+            
+            // Test the plan API directly
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                fetch('/api/plan', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('API Plan Response:', data);
+                })
+                .catch(error => {
+                    console.error('API Plan Error:', error);
+                });
+            }
+            console.log('=== END DEBUG ===');
+        }
+        
+        function showDownloadLimitInfo(limit) {
+            const gangSheetContent = document.getElementById('gangSheetContent');
+            if (gangSheetContent && userPlan === 'free') {
+                // Remove existing limit info
+                const existingLimit = document.getElementById('downloadLimitInfo');
+                if (existingLimit) {
+                    existingLimit.remove();
+                }
+                
+                // Add download limit info
+                const limitInfo = document.createElement('div');
+                limitInfo.id = 'downloadLimitInfo';
+                limitInfo.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4';
+                limitInfo.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-medium text-blue-800">Free Plan Download Limit</h3>
+                                <p class="text-sm text-blue-700">${limit.remaining} of ${limit.total} downloads remaining this month</p>
+                            </div>
+                        </div>
+                        <a href="pricing.html" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Upgrade to Pro →</a>
+                    </div>
+                `;
+                gangSheetContent.insertBefore(limitInfo, gangSheetContent.firstChild);
+            }
+        }
+        
+        function gateFeatures() {
+            console.log('gateFeatures() called with userPlan:', userPlan);
+            
+            const costCalculatorTab = document.getElementById('quoteTab');
+            const settingsTab = document.getElementById('settingsTab');
+            const costTablesSection = document.getElementById('costTableContent');
+            const costCalculatorContent = document.getElementById('quoteContent');
+            
+            console.log('Found elements:', {
+                costCalculatorTab: !!costCalculatorTab,
+                costTablesSection: !!costTablesSection,
+                costCalculatorContent: !!costCalculatorContent
+            });
+            
+            if (userPlan === 'free') {
+                // Show cost calculator tab but grey it out for free users
+                if (costCalculatorTab) {
+                    costCalculatorTab.style.display = 'block';
+                    costCalculatorTab.style.opacity = '0.5';
+                    costCalculatorTab.style.pointerEvents = 'none';
+                }
+                
+                // Grey out cost calculator content
+                if (costCalculatorContent) {
+                    costCalculatorContent.style.opacity = '0.5';
+                    costCalculatorContent.style.pointerEvents = 'none';
+                    
+                    // Add overlay to cost calculator
+                    const existingOverlay = costCalculatorContent.querySelector('.cost-calculator-overlay');
+                    if (!existingOverlay) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'cost-calculator-overlay absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center z-10';
+                        overlay.innerHTML = `
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <p class="text-gray-600 font-medium">Pro Feature</p>
+                                <p class="text-gray-500 text-sm">Upgrade to access cost calculator</p>
+                            </div>
+                        `;
+                        costCalculatorContent.style.position = 'relative';
+                        costCalculatorContent.appendChild(overlay);
+                    }
+                    
+                    // Disable all inputs in cost calculator
+                    const inputs = costCalculatorContent.querySelectorAll('input, select, button');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                }
+                
+                // Grey out cost tables in settings for free users
+                if (costTablesSection) {
+                    console.log('Applying cost tables gating for free user');
+                    
+                    // Remove any existing overlay first
+                    const existingOverlay = costTablesSection.querySelector('.cost-tables-overlay');
+                    if (existingOverlay) {
+                        existingOverlay.remove();
+                    }
+                    
+                    costTablesSection.style.opacity = '0.5';
+                    costTablesSection.style.pointerEvents = 'none';
+                    
+                    // Add overlay to indicate it's disabled
+                    const overlay = document.createElement('div');
+                    overlay.className = 'cost-tables-overlay absolute inset-0 bg-gray-200 bg-opacity-50 rounded-lg flex items-center justify-center z-10';
+                    overlay.innerHTML = `
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <p class="text-gray-600 font-medium">Pro Feature</p>
+                            <p class="text-gray-500 text-sm">Upgrade to access cost tables</p>
+                        </div>
+                    `;
+                    costTablesSection.style.position = 'relative';
+                    costTablesSection.appendChild(overlay);
+                    
+                    // Disable all input fields within cost tables
+                    const inputs = costTablesSection.querySelectorAll('input, select, button');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                    
+                    console.log('Cost tables gating applied successfully');
+                } else {
+                    console.log('costTablesSection not found!');
+                }
+            } else if (userPlan === 'pro') {
+                // Enable cost calculator for pro users
+                if (costCalculatorTab) {
+                    costCalculatorTab.style.opacity = '1';
+                    costCalculatorTab.style.pointerEvents = 'auto';
+                }
+                
+                if (costCalculatorContent) {
+                    // Remove any existing overlay
+                    const existingOverlay = costCalculatorContent.querySelector('.cost-calculator-overlay');
+                    if (existingOverlay) {
+                        existingOverlay.remove();
+                    }
+                    
+                    costCalculatorContent.style.opacity = '1';
+                    costCalculatorContent.style.pointerEvents = 'auto';
+                    
+                    // Enable all inputs in cost calculator
+                    const inputs = costCalculatorContent.querySelectorAll('input, select, button');
+                    inputs.forEach(input => {
+                        input.disabled = false;
+                    });
+                }
+                
+                // Enable cost tables for pro users
+                if (costTablesSection) {
+                    // Remove any existing overlay
+                    const existingOverlay = costTablesSection.querySelector('.cost-tables-overlay');
+                    if (existingOverlay) {
+                        existingOverlay.remove();
+                    }
+                    
+                    costTablesSection.style.opacity = '1';
+                    costTablesSection.style.pointerEvents = 'auto';
+                    
+                    // Enable all input fields within cost tables
+                    const inputs = costTablesSection.querySelectorAll('input, select, button');
+                    inputs.forEach(input => {
+                        input.disabled = false;
+                    });
+                    
+                    // Auto-show cost tables for pro users
+                    if (costTablesSection.classList.contains('hidden')) {
+                        costTablesSection.classList.remove('hidden');
+                        const toggleText = document.getElementById('costTableToggleText');
+                        const toggleIcon = document.getElementById('costTableToggleIcon');
+                        if (toggleText) toggleText.textContent = 'Hide';
+                        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+                    }
+                }
+            }
+            
+            // Show upgrade prompt in settings for free users
+            if (userPlan === 'free') {
+                const settingsContent = document.getElementById('settingsContent');
+                if (settingsContent) {
+                    const upgradePrompt = document.createElement('div');
+                    upgradePrompt.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 max-w-4xl mx-auto';
+                    upgradePrompt.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-medium text-blue-800">Upgrade to Pro</h3>
+                                <p class="text-sm text-blue-700">Get access to cost calculation features and custom pricing tables.</p>
+                                <a href="pricing.html" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Learn More →</a>
+                            </div>
+                        </div>
+                    `;
+                    settingsContent.insertBefore(upgradePrompt, settingsContent.firstChild);
+                }
+            }
         }
     </script>
 </body>

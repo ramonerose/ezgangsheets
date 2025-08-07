@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import session from "express-session";
+import { loadUsers, saveUsers, addUser, getUser, getAllUsers, updateUser, deleteUser } from "./user-management.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,9 +26,85 @@ app.use(session({
   cookie: { secure: false } // Set to true in production with HTTPS
 }));
 
-// In-memory user storage (replace with database in production)
-const users = new Map();
+// Persistent user storage
+let users = loadUsers();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
+
+// Download tracking for free users
+const downloadCounts = new Map(); // email -> { count: number, resetDate: string }
+const FREE_DOWNLOAD_LIMIT = 5; // 5 downloads per month for free users
+
+// Create admin account automatically
+const ADMIN_EMAIL = 'admin@ezgangsheets.com';
+const ADMIN_PASSWORD = 'admin123'; // Change this to something secure
+
+// Initialize admin account if it doesn't exist
+async function initializeAdminAccount() {
+  if (!users.has(ADMIN_EMAIL)) {
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    const adminUser = {
+      id: 'admin-001',
+      firstName: 'Admin',
+      lastName: 'User',
+      email: ADMIN_EMAIL,
+      password: hashedPassword,
+      company: 'EZGangSheets',
+      plan: 'pro',
+      isAdmin: true,
+      createdAt: new Date().toISOString()
+    };
+    users.set(ADMIN_EMAIL, adminUser);
+    saveUsers(users);
+    console.log('Admin account created:', ADMIN_EMAIL);
+  }
+}
+
+// Initialize admin on startup
+initializeAdminAccount();
+
+// Check download limits for free users
+function checkDownloadLimit(email) {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
+  if (!downloadCounts.has(email)) {
+    downloadCounts.set(email, { count: 0, resetDate: currentMonth });
+  }
+  
+  const userCounts = downloadCounts.get(email);
+  
+  // Reset count if it's a new month
+  if (userCounts.resetDate !== currentMonth) {
+    userCounts.count = 0;
+    userCounts.resetDate = currentMonth;
+  }
+  
+  return {
+    canDownload: userCounts.count < FREE_DOWNLOAD_LIMIT,
+    remaining: Math.max(0, FREE_DOWNLOAD_LIMIT - userCounts.count),
+    total: FREE_DOWNLOAD_LIMIT
+  };
+}
+
+// Increment download count for free users
+function incrementDownloadCount(email) {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  
+  if (!downloadCounts.has(email)) {
+    downloadCounts.set(email, { count: 0, resetDate: currentMonth });
+  }
+  
+  const userCounts = downloadCounts.get(email);
+  
+  // Reset count if it's a new month
+  if (userCounts.resetDate !== currentMonth) {
+    userCounts.count = 0;
+    userCounts.resetDate = currentMonth;
+  }
+  
+  userCounts.count++;
+}
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -128,6 +205,35 @@ function calculateCost(widthInches, heightInches, costTable = DEFAULT_COST_TABLE
 
 // ✅ SIMPLE: Process each file separately (proven working approach)
 app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
+  // Check if user has Pro plan for cost calculation
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  let userPlan = 'free';
+  let userEmail = null;
+  
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userPlan = decoded.plan || 'free';
+      userEmail = decoded.email;
+    } catch (err) {
+      // Token invalid, treat as free user
+      userPlan = 'free';
+    }
+  }
+  
+  // Check download limits for free users
+  if (userPlan === 'free' && userEmail) {
+    const downloadLimit = checkDownloadLimit(userEmail);
+    if (!downloadLimit.canDownload) {
+      return res.status(429).json({ 
+        error: 'Download limit reached', 
+        message: `Free users can download ${FREE_DOWNLOAD_LIMIT} gang sheets per month. Upgrade to Pro for unlimited downloads.`,
+        limit: downloadLimit
+      });
+    }
+  }
+  
   try {
     log("/merge-consolidated route hit!");
 
@@ -386,8 +492,8 @@ app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
         remainingLogos.splice(logosToPlace[i], 1);
       }
       
-      // Calculate cost based on the final height
-      const cost = calculateCost(gangWidth, finalHeightInch, userCostTables[gangWidth]);
+      // Calculate cost based on the final height (Pro users only)
+      const cost = userPlan === 'pro' ? calculateCost(gangWidth, finalHeightInch, userCostTables[gangWidth]) : null;
       
       // Create a descriptive filename for consolidated sheets
       const today = new Date();
@@ -409,8 +515,13 @@ app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
       log(`Completed consolidated sheet ${sheetIndex}: ${gangWidth}x${finalHeightInch} - $${cost} (${logosOnThisSheet} logos)`);
     }
 
-    const totalCost = allSheetData.reduce((sum, s) => sum + s.cost, 0);
-    log(`Total: ${allSheetData.length} sheets, $${totalCost}`);
+    const totalCost = userPlan === 'pro' ? allSheetData.reduce((sum, s) => sum + (s.cost || 0), 0) : null;
+    log(`Total: ${allSheetData.length} sheets${userPlan === 'pro' ? `, $${totalCost}` : ''}`);
+
+    // Increment download count for free users
+    if (userPlan === 'free' && userEmail) {
+      incrementDownloadCount(userEmail);
+    }
 
     res.json({
       sheets: allSheetData.map(s => ({
@@ -420,7 +531,8 @@ app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
         cost: s.cost,
         pdfBase64: s.buffer.toString("base64")
       })),
-      totalCost
+      totalCost,
+      userPlan
     });
 
   } catch (err) {
@@ -431,6 +543,34 @@ app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
 
 // ✅ Keep original single-file endpoint for backward compatibility
 app.post("/merge", upload.single("file"), async (req, res) => {
+  // Check if user has Pro plan for cost calculation
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  let userPlan = 'free';
+  let userEmail = null;
+  
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userPlan = decoded.plan || 'free';
+      userEmail = decoded.email;
+    } catch (err) {
+      // Token invalid, treat as free user
+      userPlan = 'free';
+    }
+  }
+  
+  // Check download limits for free users
+  if (userPlan === 'free' && userEmail) {
+    const downloadLimit = checkDownloadLimit(userEmail);
+    if (!downloadLimit.canDownload) {
+      return res.status(429).json({ 
+        error: 'Download limit reached', 
+        message: `Free users can download ${FREE_DOWNLOAD_LIMIT} gang sheets per month. Upgrade to Pro for unlimited downloads.`,
+        limit: downloadLimit
+      });
+    }
+  }
   try {
     log("/merge route hit!");
 
@@ -528,8 +668,8 @@ app.post("/merge", upload.single("file"), async (req, res) => {
       const pdfBytes = await sheetDoc.save();
       const finalHeightInch = Math.ceil(roundedHeightPts / POINTS_PER_INCH);
 
-      // ✅ Always round UP to the next cost tier
-      const cost = calculateCost(gangWidth, finalHeightInch);
+      // ✅ Calculate cost only for Pro users
+      const cost = userPlan === 'pro' ? calculateCost(gangWidth, finalHeightInch) : null;
 
       // Get original filename without extension
       const originalName = uploadedFile.originalname.replace(/\.[^/.]+$/, "");
@@ -543,7 +683,12 @@ app.post("/merge", upload.single("file"), async (req, res) => {
       });
     }
 
-    const totalCost = allSheetData.reduce((sum, s) => sum + s.cost, 0);
+    const totalCost = userPlan === 'pro' ? allSheetData.reduce((sum, s) => sum + (s.cost || 0), 0) : null;
+
+    // Increment download count for free users
+    if (userPlan === 'free' && userEmail) {
+      incrementDownloadCount(userEmail);
+    }
 
     res.json({
       sheets: allSheetData.map(s => ({
@@ -553,7 +698,8 @@ app.post("/merge", upload.single("file"), async (req, res) => {
         cost: s.cost,
         pdfBase64: s.buffer.toString("base64")
       })),
-      totalCost
+      totalCost,
+      userPlan
     });
 
   } catch (err) {
@@ -596,7 +742,7 @@ app.post('/api/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    users.set(email, user);
+    users = addUser(email, user);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -700,6 +846,119 @@ app.get('/api/profile', authenticateToken, (req, res) => {
 
 app.post('/api/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
+});
+
+// Plan checking endpoint
+app.get('/api/plan', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  let userPlan = 'free';
+  let userEmail = null;
+  
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userPlan = decoded.plan || 'free';
+      userEmail = decoded.email;
+    } catch (err) {
+      // Token invalid, treat as free user
+      userPlan = 'free';
+    }
+  }
+  
+  // Get download limit info for free users
+  let downloadLimit = null;
+  if (userPlan === 'free' && userEmail) {
+    downloadLimit = checkDownloadLimit(userEmail);
+  }
+  
+  res.json({ 
+    plan: userPlan,
+    downloadLimit: downloadLimit
+  });
+});
+
+// Admin Routes
+app.get('/api/admin/users', authenticateToken, (req, res) => {
+  try {
+    // Check if user is admin
+    const user = users.get(req.user.email);
+    if (!user || user.email !== 'admin@ezgangsheets.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const allUsers = getAllUsers();
+    res.json({ users: allUsers });
+
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/admin/users/:email', authenticateToken, (req, res) => {
+  try {
+    // Check if user is admin
+    const user = users.get(req.user.email);
+    if (!user || user.email !== 'admin@ezgangsheets.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { email } = req.params;
+    const deleted = deleteUser(email);
+    
+    if (deleted) {
+      // Update the users Map in memory
+      users = loadUsers();
+      res.json({ success: true, message: 'User deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/admin/users/:email/plan', authenticateToken, (req, res) => {
+  try {
+    // Check if user is admin
+    const user = users.get(req.user.email);
+    if (!user || user.email !== 'admin@ezgangsheets.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { email } = req.params;
+    const { plan } = req.body;
+
+    if (!plan || !['free', 'pro'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan. Must be "free" or "pro"' });
+    }
+
+    const updatedUser = updateUser(email, { plan });
+    
+    if (updatedUser) {
+      // Update the users Map in memory
+      users = loadUsers();
+      res.json({ 
+        success: true, 
+        message: `User plan updated to ${plan}`,
+        user: {
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          plan: updatedUser.plan
+        }
+      });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+
+  } catch (error) {
+    console.error('Update user plan error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.listen(port, () => {

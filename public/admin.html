@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EZGangSheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1f2937;
+                --bg-secondary: #111827;
+                --bg-tertiary: #374151;
+                --text-primary: #f9fafb;
+                --text-secondary: #d1d5db;
+                --border-color: #374151;
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #ffffff;
+                --bg-secondary: #f9fafb;
+                --bg-tertiary: #f3f4f6;
+                --text-primary: #111827;
+                --text-secondary: #6b7280;
+                --border-color: #e5e7eb;
+            }
+        }
+
+        .dark .shadow-lg {
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark .border-gray-200 {
+          border-color: var(--border-color);
+        }
+
+        .dark .hover\:text-gray-900:hover {
+          color: var(--text-primary) !important;
+        }
+
+        .dark .hover\:bg-gray-100:hover {
+          background-color: var(--bg-tertiary) !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Professional Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="hover:opacity-80 transition-opacity">
+                        <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    </a>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <nav id="mainNav" class="hidden md:flex items-center space-x-8">
+                        <!-- Navigation will be populated by JavaScript -->
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    Admin Dashboard
+                </h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Manage users and monitor system activity
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Content -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-7xl mx-auto">
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-blue-50 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-blue-600 mb-2" id="totalUsers">0</div>
+                        <div class="text-gray-600">Total Users</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-green-600 mb-2" id="proUsers">0</div>
+                        <div class="text-gray-600">Pro Users</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-purple-600 mb-2" id="freeUsers">0</div>
+                        <div class="text-gray-600">Free Users</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-6">
+                        <div class="text-3xl font-bold text-orange-600 mb-2" id="newUsers">0</div>
+                        <div class="text-gray-600">New This Month</div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">All Users</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Users will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bulk Operations Section -->
+                <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Bulk Operations</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <input type="email" id="bulkEmailInput" placeholder="Enter email address" class="flex-1 border border-gray-300 rounded-lg px-4 py-2">
+                            <button id="upgradeToProBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                Upgrade to Pro
+                            </button>
+                            <button id="downgradeToFreeBtn" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition">
+                                Downgrade to Free
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-600">Quickly upgrade or downgrade users by entering their email address above.</p>
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Export Data</h3>
+                    <div class="flex space-x-4">
+                        <button id="exportUsersBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                            Export Users (CSV)
+                        </button>
+                        <button id="exportStatsBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            Export Statistics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-16">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">EZGangSheets</h3>
+                <p class="text-gray-400">Your one-stop solution for optimized DTF gang sheet generation.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Quick Links</h3>
+                <ul class="space-y-3">
+                    <li><a href="index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
+                    <li><a href="features.html" class="text-gray-400 hover:text-white transition">Features</a></li>
+                    <li><a href="pricing.html" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                    <li><a href="contact.html" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Legal</h3>
+                <ul class="space-y-3">
+                    <li><a href="privacy-policy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                    <li><a href="cookie-policy.html" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Follow Us</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="mt-16 text-center text-gray-500 text-sm">
+            &copy; 2023 EZGangSheets. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <script>
+        // Navigation logic for logged-in users
+        let currentUser = null;
+        let userPlan = 'free';
+
+        // Check if user is logged in immediately
+        (function() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('user');
+            
+            if (token && userData) {
+                try {
+                    currentUser = JSON.parse(userData);
+                    // Check if user is admin
+                    if (currentUser.email === 'admin@ezgangsheets.com') {
+                        updateNavigationForUser();
+                        loadAdminData();
+                    } else {
+                        alert('Access denied. Admin privileges required.');
+                        window.location.href = 'index.html';
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    updateNavigationForGuest();
+                }
+            } else {
+                updateNavigationForGuest();
+                window.location.href = 'login.html';
+            }
+        })();
+
+        function updateNavigationForUser() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    <a href="admin.html" class="text-blue-600 font-medium dark:text-blue-400">Admin</a>
+                    <div class="relative group">
+                        <button id="userDropdownBtn" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
+                            ${currentUser.firstName} ${currentUser.lastName}
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <hr class="my-1">
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add dropdown functionality
+                const dropdownBtn = document.getElementById('userDropdownBtn');
+                const dropdown = document.getElementById('userDropdown');
+                
+                if (dropdownBtn && dropdown) {
+                    dropdownBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        dropdown.classList.toggle('hidden');
+                    });
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!dropdownBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+                }
+            }
+        }
+        
+        function updateNavigationForGuest() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    <a href="login.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Login</a>
+                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            currentUser = null;
+            userPlan = 'free';
+            updateNavigationForGuest();
+            window.location.reload();
+        }
+
+        async function loadAdminData() {
+            try {
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayUsers(data.users);
+                    updateStatistics(data.users);
+                } else {
+                    console.error('Failed to load users');
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${user.firstName} ${user.lastName}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${user.email}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${user.company || '-'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.plan === 'pro' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                            ${user.plan || 'free'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="toggleUserPlan('${user.email}', '${user.plan || 'free'}')" class="text-blue-600 hover:text-blue-900 mr-2">
+                            ${user.plan === 'pro' ? 'Downgrade to Free' : 'Upgrade to Pro'}
+                        </button>
+                        <button onclick="deleteUser('${user.email}')" class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStatistics(users) {
+            const totalUsers = users.length;
+            const proUsers = users.filter(u => u.plan === 'pro').length;
+            const freeUsers = users.filter(u => u.plan === 'free' || !u.plan).length;
+            
+            const thisMonth = new Date().getMonth();
+            const newUsers = users.filter(u => {
+                const userDate = new Date(u.createdAt);
+                return userDate.getMonth() === thisMonth;
+            }).length;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('proUsers').textContent = proUsers;
+            document.getElementById('freeUsers').textContent = freeUsers;
+            document.getElementById('newUsers').textContent = newUsers;
+        }
+
+        async function deleteUser(email) {
+            if (confirm(`Are you sure you want to delete user ${email}?`)) {
+                try {
+                    const response = await fetch(`/api/admin/users/${email}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        alert('User deleted successfully');
+                        loadAdminData(); // Reload the data
+                    } else {
+                        alert('Failed to delete user');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    alert('Error deleting user');
+                }
+            }
+        }
+
+        async function toggleUserPlan(email, currentPlan) {
+            const newPlan = currentPlan === 'pro' ? 'free' : 'pro';
+            const action = newPlan === 'pro' ? 'upgrade to Pro' : 'downgrade to Free';
+            
+            if (confirm(`Are you sure you want to ${action} for user ${email}?`)) {
+                try {
+                    const response = await fetch(`/api/admin/users/${email}/plan`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ plan: newPlan })
+                    });
+                    
+                    if (response.ok) {
+                        alert(`User ${action} successfully`);
+                        loadAdminData(); // Reload the data
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Failed to ${action}: ${errorData.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error updating user plan:', error);
+                    alert(`Error updating user plan`);
+                }
+            }
+        }
+
+        // Bulk operations functionality
+        document.getElementById('upgradeToProBtn').addEventListener('click', function() {
+            const email = document.getElementById('bulkEmailInput').value.trim();
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            toggleUserPlan(email, 'free'); // Force upgrade to pro
+        });
+
+        document.getElementById('downgradeToFreeBtn').addEventListener('click', function() {
+            const email = document.getElementById('bulkEmailInput').value.trim();
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            toggleUserPlan(email, 'pro'); // Force downgrade to free
+        });
+
+        // Export functionality
+        document.getElementById('exportUsersBtn').addEventListener('click', function() {
+            // This would generate a CSV file with user data
+            alert('Export functionality would be implemented here');
+        });
+
+        document.getElementById('exportStatsBtn').addEventListener('click', function() {
+            // This would generate statistics report
+            alert('Statistics export would be implemented here');
+        });
+    </script>
+</body>
+</html>

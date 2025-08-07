@@ -45,15 +45,13 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    <a href="index.html" class="hover:opacity-80 transition-opacity">
+                        <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    </a>
                 </div>
                 <div class="flex items-center space-x-8">
-                    <nav class="hidden md:flex items-center space-x-8">
-                        <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
-                        <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
-                        <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
-                        <a href="login.html" class="text-blue-600 font-medium dark:text-blue-400">Login</a>
-                        <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                    <nav id="mainNav" class="hidden md:flex items-center space-x-8">
+                        <!-- Navigation will be populated by JavaScript -->
                     </nav>
                 </div>
             </div>
@@ -157,16 +155,16 @@
                     <li><a href="index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
                     <li><a href="features.html" class="text-gray-400 hover:text-white transition">Features</a></li>
                     <li><a href="pricing.html" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">About Us</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Contact</a></li>
+
+                    <li><a href="contact.html" class="text-gray-400 hover:text-white transition">Contact</a></li>
                 </ul>
             </div>
             <div>
                 <h3 class="text-xl font-bold text-white mb-4">Legal</h3>
                 <ul class="space-y-3">
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                    <li><a href="privacy-policy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                    <li><a href="cookie-policy.html" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
                 </ul>
             </div>
             <div>
@@ -185,7 +183,79 @@
     </footer>
 
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
     <script>
+        // Navigation logic for logged-in users
+        let currentUser = null;
+        let userPlan = 'free';
+
+        // Check if user is logged in immediately
+        (function() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('user');
+            
+            if (token && userData) {
+                try {
+                    currentUser = JSON.parse(userData);
+                    updateNavigationForUser();
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    updateNavigationForGuest();
+                }
+            } else {
+                updateNavigationForGuest();
+            }
+            
+
+        })();
+
+        function updateNavigationForUser() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    ${currentUser.email === 'admin@ezgangsheets.com' ? '<a href="admin.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Admin</a>' : ''}
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
+                            ${currentUser.firstName} ${currentUser.lastName}
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <hr class="my-1">
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateNavigationForGuest() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    <a href="login.html" class="text-blue-600 font-medium dark:text-blue-400">Login</a>
+                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            currentUser = null;
+            userPlan = 'free';
+            updateNavigationForGuest();
+            window.location.reload();
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             

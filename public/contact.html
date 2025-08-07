@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - EZGangSheets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Professional Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="hover:opacity-80 transition-opacity">
+                        <img src="EZGangSheetsLogo.png" alt="EZGangSheets" class="h-8 logo">
+                    </a>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <nav id="mainNav" class="hidden md:flex items-center space-x-8">
+                        <!-- Navigation will be populated by JavaScript -->
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Contact Us</h1>
+            <p class="text-xl text-gray-700 max-w-2xl mx-auto">
+                Have a question, need help using the tool, or just want to connect?
+            </p>
+        </div>
+    </section>
+
+    <!-- Contact Content -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="max-w-3xl mx-auto text-center">
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <div class="mb-8">
+                        <svg class="w-16 h-16 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Get in Touch</h2>
+                        <p class="text-lg text-gray-600 mb-6">
+                            Email us anytime at <a href="mailto:info@ezgangsheets.com" class="text-blue-600 hover:text-blue-800 font-semibold">info@ezgangsheets.com</a> and we'll get back to you as soon as we can.
+                        </p>
+                        <p class="text-gray-600">
+                            We're here to make your DTF process easier — don't hesitate to reach out!
+                        </p>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">What we can help with:</h3>
+                        <div class="grid md:grid-cols-3 gap-6 text-left">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Technical Support</h4>
+                                <p class="text-sm text-gray-600">Help with gang sheet generation and optimization</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Billing & Plans</h4>
+                                <p class="text-sm text-gray-600">Questions about pricing and subscription options</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Partnership</h4>
+                                <p class="text-sm text-gray-600">Business inquiries and collaboration opportunities</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <a href="index.html" class="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-16">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">EZGangSheets</h3>
+                <p class="text-gray-400">Your one-stop solution for optimized DTF gang sheet generation.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Quick Links</h3>
+                <ul class="space-y-3">
+                    <li><a href="index.html" class="text-gray-400 hover:text-white transition">Home</a></li>
+                    <li><a href="features.html" class="text-gray-400 hover:text-white transition">Features</a></li>
+                    <li><a href="pricing.html" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                    <li><a href="contact.html" class="text-gray-400 hover:text-white transition">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Legal</h3>
+                <ul class="space-y-3">
+                    <li><a href="privacy-policy.html" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                    <li><a href="cookie-policy.html" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white mb-4">Follow Us</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="mt-16 text-center text-gray-500 text-sm">
+            &copy; 2023 EZGangSheets. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <script>
+        // Navigation logic for logged-in users
+        let currentUser = null;
+        let userPlan = 'free';
+
+        // Check if user is logged in immediately
+        (function() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('user');
+            
+            if (token && userData) {
+                try {
+                    currentUser = JSON.parse(userData);
+                    updateNavigationForUser();
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    updateNavigationForGuest();
+                }
+            } else {
+                updateNavigationForGuest();
+            }
+        })();
+
+        function updateNavigationForUser() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    ${currentUser.email === 'admin@ezgangsheets.com' ? '<a href="admin.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Admin</a>' : ''}
+                    <div class="relative group">
+                        <button id="userDropdownBtn" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
+                            ${currentUser.firstName} ${currentUser.lastName}
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <hr class="my-1">
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add dropdown functionality
+                const dropdownBtn = document.getElementById('userDropdownBtn');
+                const dropdown = document.getElementById('userDropdown');
+                
+                if (dropdownBtn && dropdown) {
+                    dropdownBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        dropdown.classList.toggle('hidden');
+                    });
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!dropdownBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.add('hidden');
+                        }
+                    });
+                }
+            }
+        }
+        
+        function updateNavigationForGuest() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    <a href="login.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Login</a>
+                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            currentUser = null;
+            userPlan = 'free';
+            updateNavigationForGuest();
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
