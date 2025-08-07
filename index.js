@@ -919,7 +919,7 @@ app.delete('/api/admin/users/:email', authenticateToken, (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const const { email } = req.params;
+    const { email } = req.params;
     const deleted = deleteUser(email);
     
     if (deleted) {
