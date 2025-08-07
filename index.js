@@ -31,6 +31,16 @@ app.use(session({
   name: 'ezgangsheets.sid' // Custom session name
 }));
 
+// Healthcheck route for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Root route - serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Persistent user storage
 let users = loadUsers();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-change-in-production';
