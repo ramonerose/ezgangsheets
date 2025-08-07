@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // File to store user data
 const USERS_FILE = 'users.json';
@@ -77,7 +77,7 @@ function deleteUser(email) {
     return deleted;
 }
 
-module.exports = {
+export {
     loadUsers,
     saveUsers,
     addUser,
