@@ -23,7 +23,7 @@ const port = process.env.PORT || 8080;
 let stripe = null;
 let SUBSCRIPTION_PLANS = {};
 
-if (process.env.STRIPE_SECRET_KEY) {
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_your_stripe_secret_key_here') {
   try {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     
@@ -38,9 +38,10 @@ if (process.env.STRIPE_SECRET_KEY) {
     console.log('Stripe initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Stripe:', error.message);
+    console.log('Continuing without Stripe - payment features disabled');
   }
 } else {
-  console.log('Stripe API key not provided - payment features disabled');
+  console.log('Stripe API key not provided or invalid - payment features disabled');
 }
 
 // Production-ready middleware
@@ -133,7 +134,6 @@ function checkDownloadLimit(email) {
   };
 }
 
-// Increment download count for free users
 function incrementDownloadCount(email) {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -153,7 +153,7 @@ function incrementDownloadCount(email) {
   userCounts.count++;
 }
 
-// Authentication middleware
+// JWT authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -164,716 +164,314 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ error: 'Invalid token' });
+      return res.status(403).json({ error: 'Invalid or expired token' });
     }
     req.user = user;
     next();
   });
 };
 
-// Enhanced multer configuration with file size limits and validation
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per file
-    files: 10 // Maximum 10 files per request
-  },
-  fileFilter: (req, file, cb) => {
-    // Only allow PDF files
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF files are allowed'), false);
-    }
-  }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
-    }
-    if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ error: 'Too many files. Maximum is 10 files.' });
-    }
-  }
-  if (error.message === 'Only PDF files are allowed') {
-    return res.status(400).json({ error: 'Only PDF files are allowed.' });
-  }
-  console.error('Server error:', error);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// Production logging function
+// Logging function
 const log = (message) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[${new Date().toISOString()}] ${message}`);
-  }
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`);
 };
 
-// Constants
-const POINTS_PER_INCH = 72;
-const SAFE_MARGIN_INCH = 0.125;
-const SPACING_INCH = 0.5;
-
-// ✅ Default cost table (fallback)
+// Cost calculation table (DTF printing costs)
 const DEFAULT_COST_TABLE = {
-  12: 5.28,
-  24: 10.56,
-  36: 15.84,
-  48: 21.12,
-  60: 26.40,
-  80: 35.20,
-  100: 44.00,
-  120: 49.28,
-  140: 56.32,
-  160: 61.60,
-  180: 68.64,
-  200: 75.68
+  '2x2': 0.50,
+  '3x3': 0.75,
+  '4x4': 1.00,
+  '5x5': 1.25,
+  '6x6': 1.50,
+  '8x8': 2.00,
+  '10x10': 2.50,
+  '12x12': 3.00,
+  '16x16': 4.00,
+  '20x20': 5.00,
+  '24x24': 6.00,
+  '30x30': 7.50,
+  '36x36': 9.00,
+  '48x48': 12.00,
+  '60x60': 15.00,
+  '72x72': 18.00
 };
 
-// ✅ NEW FIXED LOGIC
 function calculateCost(widthInches, heightInches, costTable = DEFAULT_COST_TABLE) {
-  // Round UP to the next 12-inch increment
-  const roundedHeight = Math.ceil(heightInches / 12) * 12;
-
-  // If exact tier exists, return it
-  if (costTable[roundedHeight]) {
-    return costTable[roundedHeight];
+  // Find the closest size in the cost table
+  const sizes = Object.keys(costTable).map(size => {
+    const [w, h] = size.split('x').map(Number);
+    return { size, width: w, height: h, cost: costTable[size] };
+  });
+  
+  let closestSize = sizes[0];
+  let minDifference = Math.abs(widthInches - closestSize.width) + Math.abs(heightInches - closestSize.height);
+  
+  for (const size of sizes) {
+    const difference = Math.abs(widthInches - size.width) + Math.abs(heightInches - size.height);
+    if (difference < minDifference) {
+      minDifference = difference;
+      closestSize = size;
+    }
   }
-
-  // Otherwise find the NEXT available tier (round up to next in table)
-  const availableTiers = Object.keys(costTable).map(Number).sort((a, b) => a - b);
-  const nextTier = availableTiers.find(t => t >= roundedHeight) || Math.max(...availableTiers);
-
-  return costTable[nextTier];
+  
+  return closestSize.cost;
 }
 
-// ✅ SIMPLE: Process each file separately (proven working approach)
-app.post("/merge-consolidated", upload.array("files", 10), async (req, res) => {
-  // Check if user has Pro plan for cost calculation
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  let userPlan = 'free';
-  let userEmail = null;
-  
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userPlan = decoded.plan || 'free';
-      userEmail = decoded.email;
-    } catch (err) {
-      // Token invalid, treat as free user
-      userPlan = 'free';
-    }
-  }
-  
-  // Check download limits for free users
-  if (userPlan === 'free' && userEmail) {
-    const downloadLimit = checkDownloadLimit(userEmail);
-    if (!downloadLimit.canDownload) {
-      return res.status(429).json({ 
-        error: 'Download limit reached', 
-        message: `Free users can download ${FREE_DOWNLOAD_LIMIT} gang sheets per month. Upgrade to Pro for unlimited downloads.`,
-        limit: downloadLimit
-      });
-    }
-  }
-  
+// PDF generation endpoint
+app.post('/api/generate-pdf', upload.single('image'), async (req, res) => {
   try {
-    log("/merge-consolidated route hit!");
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
 
-    const files = req.files;
-    const quantities = JSON.parse(req.body.quantities || "[]");
-    const smartFit = true; // Smart Fit is now always enabled by default
-    const gangWidth = parseInt(req.body.gangWidth, 10); // 22 or 30
-    const maxLengthInches = parseInt(req.body.maxLength, 10) || 200;
+    const { width, height, quantity, isRotated, gangWidth, maxLength } = req.body;
     
-    // Get user's custom cost tables or use defaults
-    let userCostTables = {
-      22: DEFAULT_COST_TABLE,
-      30: {
-        12: 7.18, 24: 14.36, 36: 21.54, 48: 28.72, 60: 35.90, 80: 47.87,
-        100: 59.84, 120: 67.02, 140: 76.60, 160: 83.78, 180: 93.35, 200: 102.92
-      }
-    };
+    if (!width || !height || !quantity || !gangWidth || !maxLength) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const widthInches = parseFloat(width);
+    const heightInches = parseFloat(height);
+    const quantityNum = parseInt(quantity);
+    const gangWidthInches = parseFloat(gangWidth);
+    const maxLengthInches = parseFloat(maxLengthLength);
+    const isRotatedBool = isRotated === 'true';
+
+    if (widthInches <= 0 || heightInches <= 0 || quantityNum <= 0 || gangWidthInches <= 0 || maxLengthInches <= 0) {
+      return res.status(400).json({ error: 'Invalid dimensions or quantities' });
+    }
+
+    // Check user's plan and download limits
+    const userEmail = req.session.userEmail;
+    let userPlan = 'free';
     
-    if (req.body.costTables) {
-      try {
-        userCostTables = JSON.parse(req.body.costTables);
-      } catch (error) {
-        log("Invalid cost tables provided, using default");
+    if (userEmail) {
+      const user = users.get(userEmail);
+      if (user) {
+        userPlan = user.plan;
       }
     }
 
-    if (!files || files.length === 0) throw new Error("No files uploaded");
-    if (files.length !== quantities.length) throw new Error("File count doesn't match quantity count");
-
-    log(`Processing ${files.length} files with consolidation`);
-    log(`Selected gang width: ${gangWidth} inches`);
-    log(`Max sheet length: ${maxLengthInches} inches`);
-
-    // ✅ TRUE CONSOLIDATION: Collect all logos and pack them optimally
-    log("Starting TRUE consolidation - collecting all logos...");
-    
-    // Step 1: Collect all logo data and determine optimal orientations
-    const logoData = [];
-    let totalLogosNeeded = 0;
-    
-    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
-      const uploadedFile = files[fileIndex];
-      const quantity = quantities[fileIndex];
-      
-      log(`Analyzing file ${fileIndex + 1}: ${uploadedFile.originalname} - ${quantity} logos needed`);
-      
-      const uploadedPdf = await PDFDocument.load(uploadedFile.buffer);
-      const uploadedPage = uploadedPdf.getPages()[0];
-      let { width: logoWidth, height: logoHeight } = uploadedPage.getSize();
-      
-      log(`Original logo dimensions: ${logoWidth} x ${logoHeight} points (${(logoWidth/72).toFixed(2)} x ${(logoHeight/72).toFixed(2)} inches)`);
-
-      // Determine optimal orientation for this logo
-      const horizontalLayout = calculateLayout(logoWidth, logoHeight, false, gangWidth, maxLengthInches);
-      const verticalLayout = calculateLayout(logoHeight, logoWidth, true, gangWidth, maxLengthInches);
-      
-      let bestLayout;
-      let isRotated;
-      if (verticalLayout.logosPerSheet > horizontalLayout.logosPerSheet) {
-        bestLayout = { ...verticalLayout, orientation: 'vertical' };
-        isRotated = true;
-        log(`Smart Fit: Vertical wins for ${uploadedFile.originalname} (${verticalLayout.logosPerSheet} vs ${horizontalLayout.logosPerSheet} logos)`);
-      } else {
-        bestLayout = { ...horizontalLayout, orientation: 'horizontal' };
-        isRotated = false;
-        log(`Smart Fit: Horizontal wins for ${uploadedFile.originalname} (${horizontalLayout.logosPerSheet} vs ${verticalLayout.logosPerSheet} logos)`);
-      }
-      
-      // Store logo data for consolidation
-      const finalLogoWidth = isRotated ? logoHeight : logoWidth;
-      const finalLogoHeight = isRotated ? logoWidth : logoHeight;
-      
-      log(`Final logo dimensions after rotation: ${finalLogoWidth} x ${finalLogoHeight} points (${(finalLogoWidth/72).toFixed(2)} x ${(finalLogoHeight/72).toFixed(2)} inches)`);
-      
-      logoData.push({
-        fileIndex,
-        originalName: uploadedFile.originalname,
-        buffer: uploadedFile.buffer,
-        quantity,
-        logoWidth: finalLogoWidth,
-        logoHeight: finalLogoHeight,
-        isRotated,
-        layout: bestLayout
-      });
-      
-      totalLogosNeeded += quantity;
-    }
-    
-    log(`Total logos to consolidate: ${totalLogosNeeded}`);
-    
-    function calculateLayout(width, height, isRotated, gangWidth, maxLength) {
-      const safeMarginPts = SAFE_MARGIN_INCH * POINTS_PER_INCH;
-      const spacingPts = SPACING_INCH * POINTS_PER_INCH;
-      const sheetWidthPts = gangWidth * POINTS_PER_INCH;
-      const maxHeightPts = maxLength * POINTS_PER_INCH;
-
-      const logoTotalWidth = width + spacingPts;
-      const logoTotalHeight = height + spacingPts;
-
-      const logosPerRow = Math.floor(
-        (sheetWidthPts - safeMarginPts * 2 + spacingPts) / logoTotalWidth
-      );
-      if (logosPerRow < 1) return { logosPerRow: 0, rowsPerSheet: 0, logosPerSheet: 0 };
-      
-      const rowsPerSheet = Math.floor(
-        (maxHeightPts - safeMarginPts * 2 + spacingPts) / logoTotalHeight
-      );
-      const logosPerSheet = logosPerRow * rowsPerSheet;
-      
-      return { logosPerRow, rowsPerSheet, logosPerSheet, logoTotalWidth, logoTotalHeight };
-    }
-
-    // Step 2: Create a flat list of all logos to pack, grouped by file
-    const allLogos = [];
-    logoData.forEach((logo, fileIndex) => {
-      for (let i = 0; i < logo.quantity; i++) {
-        allLogos.push({
-          ...logo,
-          logoIndex: i,
-          fileIndex: fileIndex
+    // Apply download limits for free users
+    if (userPlan === 'free') {
+      const downloadLimit = checkDownloadLimit(userEmail);
+      if (!downloadLimit.canDownload) {
+        return res.status(403).json({ 
+          error: 'Download limit reached for free plan',
+          limit: downloadLimit
         });
       }
-    });
-    
-    // Sort logos by file index to group them together
-    allLogos.sort((a, b) => a.fileIndex - b.fileIndex);
-    
-    log(`Created flat list of ${allLogos.length} logos to pack, grouped by file`);
-    
-    // Step 3: Pack logos into sheets using a simple greedy approach
-    const allSheetData = [];
-    const safeMarginPts = SAFE_MARGIN_INCH * POINTS_PER_INCH;
-    const spacingPts = SPACING_INCH * POINTS_PER_INCH;
-    const sheetWidthPts = gangWidth * POINTS_PER_INCH;
-    
-    let remainingLogos = [...allLogos];
-    let sheetIndex = 0;
-    
-    while (remainingLogos.length > 0) {
-      sheetIndex++;
-      log(`Creating sheet ${sheetIndex} with ${remainingLogos.length} logos remaining`);
-      
-      // First pass: calculate exactly how many logos fit and the height needed
-      let tempYCursor = maxLengthInches * POINTS_PER_INCH - safeMarginPts;
-      let tempLogosOnThisSheet = 0;
-      const logosToPlace = [];
-      let tempCurrentFileIndex = -1;
-      let tempCurrentRowLogos = 0;
-      
-      for (let i = 0; i < remainingLogos.length; i++) {
-        const logo = remainingLogos[i];
-        const logoTotalWidth = logo.logoWidth + spacingPts;
-        const logoTotalHeight = logo.logoHeight + spacingPts;
-        
-        // Check if we're switching to a new file
-        if (logo.fileIndex !== tempCurrentFileIndex) {
-          // New file, force a new row
-          tempCurrentFileIndex = logo.fileIndex;
-          tempCurrentRowLogos = 0;
-          
-          // Check if we have space for a new row
-          if (tempYCursor - logoTotalHeight < safeMarginPts) {
-            // No more space on this sheet
-            break;
-          }
-          tempYCursor -= logoTotalHeight;
-        } else {
-          // Same file, check if we need a new row
-          const logosInCurrentRow = Math.floor((sheetWidthPts - safeMarginPts * 2 + spacingPts) / logoTotalWidth);
-          
-          if (tempCurrentRowLogos >= logosInCurrentRow) {
-            // Need a new row for the same file
-            tempCurrentRowLogos = 0;
-            
-            // Check if we have space for a new row
-            if (tempYCursor - logoTotalHeight < safeMarginPts) {
-              // No more space on this sheet
-              break;
-            }
-            tempYCursor -= logoTotalHeight;
-          }
-        }
-        
-        tempCurrentRowLogos++;
-        tempLogosOnThisSheet++;
-        logosToPlace.push(i);
-      }
-      
-      // Calculate the exact height needed
-      const actualHeightPts = maxLengthInches * POINTS_PER_INCH - tempYCursor + safeMarginPts;
-      const finalHeightInch = Math.ceil(actualHeightPts / POINTS_PER_INCH);
-      
-      log(`Sheet ${sheetIndex}: Will place ${tempLogosOnThisSheet} logos, calculated height: ${finalHeightInch} inches`);
-      
-      // Create the page at the exact size needed
-      const sheetDoc = await PDFDocument.create();
-      const page = sheetDoc.addPage([sheetWidthPts, finalHeightInch * POINTS_PER_INCH]);
-      
-      let yCursor = finalHeightInch * POINTS_PER_INCH - safeMarginPts;
-      let logosOnThisSheet = 0;
-      let currentFileIndex = -1;
-      let currentRowLogos = 0;
-      
-      // Second pass: place the logos using the same logic
-      for (let i = 0; i < logosToPlace.length; i++) {
-        const logoIndex = logosToPlace[i];
-        const logo = remainingLogos[logoIndex];
-        const logoTotalWidth = logo.logoWidth + spacingPts;
-        const logoTotalHeight = logo.logoHeight + spacingPts;
-        
-        // Check if we're switching to a new file
-        if (logo.fileIndex !== currentFileIndex) {
-          // New file, force a new row
-          currentFileIndex = logo.fileIndex;
-          currentRowLogos = 0;
-          yCursor -= logoTotalHeight;
-        } else {
-          // Same file, check if we need a new row
-          const logosInCurrentRow = Math.floor((sheetWidthPts - safeMarginPts * 2 + spacingPts) / logoTotalWidth);
-          
-          if (currentRowLogos >= logosInCurrentRow) {
-            // Need a new row for the same file
-            currentRowLogos = 0;
-            yCursor -= logoTotalHeight;
-          }
-        }
-        
-        // Calculate x position for this logo
-        const xCursor = safeMarginPts + (currentRowLogos * logoTotalWidth);
-        log(`Logo ${logoIndex}: currentRowLogos=${currentRowLogos}, logoTotalWidth=${logoTotalWidth}, xCursor=${xCursor}, sheetWidthPts=${sheetWidthPts}`);
-        
-        // Embed and draw the logo
-        const [embeddedPage] = await sheetDoc.embedPdf(logo.buffer);
-        
-        if (logo.isRotated) {
-          // For rotated logos, adjust x position to account for rotation
-          // When rotated 90°, the logo extends to the left of the origin point
-          // We need to add the rotated logo's width (which is the original logo's height)
-          page.drawPage(embeddedPage, {
-            x: xCursor + logo.logoWidth, // Add the rotated logo's width (original height)
-            y: yCursor,
-            rotate: degrees(90)
-          });
-        } else {
-          page.drawPage(embeddedPage, { x: xCursor, y: yCursor });
-        }
-        
-        log(`Placed logo ${logoIndex} at position (${xCursor}, ${yCursor}) on sheet ${sheetIndex}`);
-        
-        currentRowLogos++;
-        logosOnThisSheet++;
-      }
-      
-      // Remove the logos we just placed
-      for (let i = logosToPlace.length - 1; i >= 0; i--) {
-        remainingLogos.splice(logosToPlace[i], 1);
-      }
-      
-      // Calculate cost based on the final height (Pro users only)
-      const cost = userPlan === 'pro' ? calculateCost(gangWidth, finalHeightInch, userCostTables[gangWidth]) : null;
-      
-      // Create a descriptive filename for consolidated sheets
-      const today = new Date();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const year = String(today.getFullYear()).slice(-2);
-      const dateString = `${month}-${day}-${year}`;
-      const filename = `${gangWidth}x${finalHeightInch}_gangsheet_${dateString}.pdf`;
-      
-      const pdfBytes = await sheetDoc.save();
-      allSheetData.push({
-        filename,
-        buffer: Buffer.from(pdfBytes),
-        width: gangWidth,
-        height: finalHeightInch,
-        cost
-      });
-      
-      log(`Completed consolidated sheet ${sheetIndex}: ${gangWidth}x${finalHeightInch} - $${cost} (${logosOnThisSheet} logos)`);
     }
 
-    const totalCost = userPlan === 'pro' ? allSheetData.reduce((sum, s) => sum + (s.cost || 0), 0) : null;
-    log(`Total: ${allSheetData.length} sheets${userPlan === 'pro' ? `, $${totalCost}` : ''}`);
+    // Calculate layout
+    const layout = calculateLayout(widthInches, heightInches, isRotatedBool, gangWidthInches, maxLengthInches);
+    
+    if (!layout) {
+      return res.status(400).json({ error: 'Unable to calculate layout with given parameters' });
+    }
 
+    // Create PDF
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([layout.gangWidth * 72, layout.gangLength * 72]); // Convert inches to points (72 points = 1 inch)
+    
+    // Embed the image
+    const imageBytes = req.file.buffer;
+    const image = await pdfDoc.embedPng(imageBytes);
+    
+    // Calculate image dimensions on the page
+    const imageWidth = widthInches * 72;
+    const imageHeight = heightInches * 72;
+    
+    // Draw images in the calculated positions
+    for (let i = 0; i < layout.positions.length; i++) {
+      const pos = layout.positions[i];
+      const x = pos.x * 72;
+      const y = page.getHeight() - (pos.y * 72) - imageHeight; // Flip Y coordinate for PDF
+      
+      page.drawImage(image, {
+        x: x,
+        y: y,
+        width: imageWidth,
+        height: imageHeight
+      });
+    }
+
+    // Add metadata
+    pdfDoc.setTitle(`Gang Sheet - ${widthInches}"x${heightInches}" - Qty: ${quantityNum}`);
+    pdfDoc.setAuthor('EZGangSheets');
+    pdfDoc.setSubject('DTF Gang Sheet');
+    
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save();
+    
     // Increment download count for free users
-    if (userPlan === 'free' && userEmail) {
+    if (userEmail && userPlan === 'free') {
       incrementDownloadCount(userEmail);
     }
 
-    res.json({
-      sheets: allSheetData.map(s => ({
-        filename: s.filename,
-        width: s.width,
-        height: s.height,
-        cost: s.cost,
-        pdfBase64: s.buffer.toString("base64")
-      })),
-      totalCost,
-      userPlan
-    });
-
-  } catch (err) {
-    console.error("CONSOLIDATED MERGE ERROR:", err);
-    res.status(500).send(`Server error: ${err.message}`);
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="gang-sheet-${widthInches}x${heightInches}-qty${quantityNum}.pdf"`);
+    
+    // Send PDF
+    res.send(Buffer.from(pdfBytes));
+    
+    log(`PDF generated: ${widthInches}"x${heightInches}" - Qty: ${quantityNum} - User: ${userEmail || 'anonymous'}`);
+    
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    res.status(500).json({ error: 'Failed to generate PDF' });
   }
 });
 
-// ✅ Keep original single-file endpoint for backward compatibility
-app.post("/merge", upload.single("file"), async (req, res) => {
-  // Check if user has Pro plan for cost calculation
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  let userPlan = 'free';
-  let userEmail = null;
-  
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userPlan = decoded.plan || 'free';
-      userEmail = decoded.email;
-    } catch (err) {
-      // Token invalid, treat as free user
-      userPlan = 'free';
-    }
+// Layout calculation function
+function calculateLayout(width, height, isRotated, gangWidth, maxLength) {
+  if (isRotated) {
+    [width, height] = [height, width];
   }
   
-  // Check download limits for free users
-  if (userPlan === 'free' && userEmail) {
-    const downloadLimit = checkDownloadLimit(userEmail);
-    if (!downloadLimit.canDownload) {
-      return res.status(429).json({ 
-        error: 'Download limit reached', 
-        message: `Free users can download ${FREE_DOWNLOAD_LIMIT} gang sheets per month. Upgrade to Pro for unlimited downloads.`,
-        limit: downloadLimit
+  // Calculate how many images can fit in the gang sheet
+  const imagesPerRow = Math.floor(gangWidth / width);
+  const imagesPerColumn = Math.floor(maxLength / height);
+  const totalImages = imagesPerRow * imagesPerColumn;
+  
+  if (totalImages === 0) {
+    return null;
+  }
+  
+  // Calculate positions for each image
+  const positions = [];
+  for (let row = 0; row < imagesPerColumn; row++) {
+    for (let col = 0; col < imagesPerRow; col++) {
+      positions.push({
+        x: col * width,
+        y: row * height
       });
     }
   }
-  try {
-    log("/merge route hit!");
+  
+  return {
+    gangWidth: gangWidth,
+    gangLength: maxLength,
+    positions: positions,
+    totalImages: totalImages
+  };
+}
 
-    const quantity = parseInt(req.body.quantity, 10);
-    const rotate = req.body.rotate === "true";
-    const gangWidth = parseInt(req.body.gangWidth, 10); // 22 or 30
-    const maxLengthInches = parseInt(req.body.maxLength, 10) || 200;
-
-    const uploadedFile = req.file;
-    if (!uploadedFile) throw new Error("No file uploaded");
-    if (!quantity || quantity <= 0) throw new Error("Invalid quantity");
-
-    log(`Requested quantity: ${quantity}, rotate: ${rotate}`);
-    log(`Selected gang width: ${gangWidth} inches`);
-    log(`Max sheet length: ${maxLengthInches} inches`);
-    log(`Uploaded PDF size: ${uploadedFile.size} bytes`);
-
-    const uploadedPdf = await PDFDocument.load(uploadedFile.buffer);
-    const uploadedPage = uploadedPdf.getPages()[0];
-    let { width: logoWidth, height: logoHeight } = uploadedPage.getSize();
-
-    let layoutWidth = logoWidth;
-    let layoutHeight = logoHeight;
-    if (rotate) [layoutWidth, layoutHeight] = [logoHeight, logoWidth];
-
-    const safeMarginPts = SAFE_MARGIN_INCH * POINTS_PER_INCH;
-    const spacingPts = SPACING_INCH * POINTS_PER_INCH;
-
-    const sheetWidthPts = gangWidth * POINTS_PER_INCH;
-    const maxHeightPts = maxLengthInches * POINTS_PER_INCH;
-
-    const logoTotalWidth = layoutWidth + spacingPts;
-    const logoTotalHeight = layoutHeight + spacingPts;
-
-    const logosPerRow = Math.floor(
-      (sheetWidthPts - safeMarginPts * 2 + spacingPts) / logoTotalWidth
-    );
-    if (logosPerRow < 1) throw new Error("Logo too wide for sheet");
-    log(`Can fit ${logosPerRow} logos per row`);
-
-    const rowsPerSheet = Math.floor(
-      (maxHeightPts - safeMarginPts * 2 + spacingPts) / logoTotalHeight
-    );
-    const logosPerSheet = logosPerRow * rowsPerSheet;
-
-    log(`Each sheet max ${rowsPerSheet} rows → ${logosPerSheet} logos per sheet`);
-
-    const totalSheetsNeeded = Math.ceil(quantity / logosPerSheet);
-    log(`Total sheets needed: ${totalSheetsNeeded}`);
-
-    const drawLogo = (page, embeddedPage, x, y) => {
-      if (rotate) {
-        // For rotated logos, adjust x position to account for rotation
-        // When rotated 90°, the logo extends to the left of the origin point
-        page.drawPage(embeddedPage, {
-          x: x + logoHeight, // Add the rotated logo's width
-          y: y,
-          rotate: degrees(90)
-        });
-      } else {
-        page.drawPage(embeddedPage, { x, y });
-      }
-    };
-
-    let allSheetData = [];
-    let remaining = quantity;
-
-    for (let sheetIndex = 0; sheetIndex < totalSheetsNeeded; sheetIndex++) {
-      const sheetDoc = await PDFDocument.create();
-      const [embeddedPage] = await sheetDoc.embedPdf(uploadedFile.buffer);
-
-      const logosOnThisSheet = Math.min(remaining, logosPerSheet);
-      const usedRows = Math.ceil(logosOnThisSheet / logosPerRow);
-      const usedHeightPts =
-        usedRows * logoTotalHeight + safeMarginPts * 2 - spacingPts;
-      const roundedHeightPts =
-        Math.ceil(usedHeightPts / POINTS_PER_INCH) * POINTS_PER_INCH;
-
-      const page = sheetDoc.addPage([sheetWidthPts, roundedHeightPts]);
-
-      let yCursor = roundedHeightPts - safeMarginPts - layoutHeight;
-      let drawn = 0;
-
-      while (drawn < logosOnThisSheet) {
-        let xCursor = safeMarginPts;
-        for (let c = 0; c < logosPerRow && drawn < logosOnThisSheet; c++) {
-          drawLogo(page, embeddedPage, xCursor, yCursor);
-          drawn++;
-          remaining--;
-          xCursor += logoTotalWidth;
-        }
-        yCursor -= logoTotalHeight;
-      }
-
-      const pdfBytes = await sheetDoc.save();
-      const finalHeightInch = Math.ceil(roundedHeightPts / POINTS_PER_INCH);
-
-      // ✅ Calculate cost only for Pro users
-      const cost = userPlan === 'pro' ? calculateCost(gangWidth, finalHeightInch) : null;
-
-      // Get original filename without extension
-      const originalName = uploadedFile.originalname.replace(/\.[^/.]+$/, "");
-      const filename = `${gangWidth}x${finalHeightInch}_${originalName}.pdf`;
-      allSheetData.push({
-        filename,
-        buffer: Buffer.from(pdfBytes),
-        width: gangWidth,
-        height: finalHeightInch,
-        cost
-      });
+// Multer configuration for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow PNG images
+    if (file.mimetype === 'image/png') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PNG images are allowed'), false);
     }
-
-    const totalCost = userPlan === 'pro' ? allSheetData.reduce((sum, s) => sum + (s.cost || 0), 0) : null;
-
-    // Increment download count for free users
-    if (userPlan === 'free' && userEmail) {
-      incrementDownloadCount(userEmail);
-    }
-
-    res.json({
-      sheets: allSheetData.map(s => ({
-        filename: s.filename,
-        width: s.width,
-        height: s.height,
-        cost: s.cost,
-        pdfBase64: s.buffer.toString("base64")
-      })),
-      totalCost,
-      userPlan
-    });
-
-  } catch (err) {
-    console.error("MERGE ERROR:", err);
-    res.status(500).send(`Server error: ${err.message}`);
   }
 });
 
-// Authentication Routes
+// User registration endpoint
 app.post('/api/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password, company, plan } = req.body;
-
-    // Basic validation
+    const { firstName, lastName, email, password, company } = req.body;
+    
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ error: 'All required fields must be provided' });
+      return res.status(400).json({ error: 'All fields are required' });
     }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
-    }
-
+    
     // Check if user already exists
     if (users.has(email)) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'User already exists' });
     }
-
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     // Create user
-    const user = {
-      id: Date.now().toString(),
+    const newUser = {
+      id: `user-${Date.now()}`,
       firstName,
       lastName,
       email,
       password: hashedPassword,
       company: company || '',
-      plan: plan || 'free',
+      plan: 'free',
+      isAdmin: false,
       createdAt: new Date().toISOString()
     };
-
-    users = addUser(email, user);
-
+    
+    // Add user to storage
+    users.set(email, newUser);
+    saveUsers(users);
+    
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, plan: user.plan },
+      { email: newUser.email, userId: newUser.id },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
-
-    res.json({
-      success: true,
+    
+    res.status(201).json({
       message: 'User registered successfully',
-      token,
       user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        company: user.company,
-        plan: user.plan
-      }
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        company: newUser.company,
+        plan: newUser.plan
+      },
+      token: token
     });
-
+    
+    log(`User registered: ${email}`);
+    
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
+// User login endpoint
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Basic validation
+    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-
+    
     // Find user
     const user = users.get(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
+    
     // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
+    
+    // Set session
+    req.session.userEmail = user.email;
+    
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email, plan: user.plan },
+      { email: user.email, userId: user.id },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }
     );
-
+    
     res.json({
-      success: true,
       message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        company: user.company,
-        plan: user.plan
-      }
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/api/profile', authenticateToken, (req, res) => {
-  try {
-    const user = users.get(req.user.email);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -881,35 +479,62 @@ app.get('/api/profile', authenticateToken, (req, res) => {
         email: user.email,
         company: user.company,
         plan: user.plan,
-        createdAt: user.createdAt
-      }
+        isAdmin: user.isAdmin
+      },
+      token: token
     });
-
+    
+    log(`User logged in: ${email}`);
+    
   } catch (error) {
-    console.error('Profile error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 
+// User logout endpoint
 app.post('/api/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    res.json({ message: 'Logout successful' });
+  });
 });
 
-// Plan checking endpoint
-app.get('/api/plan', (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+// Get current user endpoint
+app.get('/api/user', authenticateToken, (req, res) => {
+  try {
+    const user = users.get(req.user.email);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      company: user.company,
+      plan: user.plan,
+      isAdmin: user.isAdmin
+    });
+    
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to get user' });
+  }
+});
+
+// Get user plan and download limit info
+app.get('/api/user-plan', (req, res) => {
+  const userEmail = req.session.userEmail;
   let userPlan = 'free';
-  let userEmail = null;
   
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      userPlan = decoded.plan || 'free';
-      userEmail = decoded.email;
-    } catch (err) {
-      // Token invalid, treat as free user
-      userPlan = 'free';
+  if (userEmail) {
+    const user = users.get(userEmail);
+    if (user) {
+      userPlan = user.plan;
     }
   }
   
@@ -1166,4 +791,4 @@ app.get('/api/subscription-status', authenticateToken, async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Backend running on port ${port}`);
-}); 
+});
