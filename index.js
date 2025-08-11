@@ -6,7 +6,12 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import session from "express-session";
+import Stripe from "stripe";
+import dotenv from "dotenv";
 import { loadUsers, saveUsers, addUser, getUser, getAllUsers, updateUser, deleteUser } from "./user-management.js";
+
+// Load environment variables
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,9 +19,37 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Initialize Stripe (only if API key is provided)
+let stripe = null;
+let SUBSCRIPTION_PLANS = {};
+
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_your_stripe_secret_key_here') {
+  try {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    
+    // Stripe subscription plans configuration
+    SUBSCRIPTION_PLANS = {
+      pro: {
+        monthly: 'price_1Rv2PdHdZtX9fIK0rlp2TELv',
+        annual: 'price_1Rv2PdHdZtX9fIK0DTl195FP'
+      }
+    };
+    
+    console.log('Stripe initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Stripe:', error.message);
+    console.log('Continuing without Stripe - payment features disabled');
+  }
+} else {
+  console.log('Stripe API key not provided or invalid - payment features disabled');
+}
+
 // Production-ready middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static("public"));
+
+// Special middleware for Stripe webhooks (must be raw body)
+app.use('/api/webhook', express.raw({ type: 'application/json' }));
 
 // Session middleware - Production ready
 app.use(session({
@@ -973,6 +1006,162 @@ app.put('/api/admin/users/:email/plan', authenticateToken, (req, res) => {
   } catch (error) {
     console.error('Update user plan error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Stripe Payment Endpoints
+app.post('/api/create-checkout-session', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Payment system not available' });
+  }
+  
+  try {
+    const { plan, billingCycle, customerEmail } = req.body;
+    
+    if (!plan || !billingCycle || !customerEmail) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const priceId = SUBSCRIPTION_PLANS[plan][billingCycle];
+    
+    if (!priceId) {
+      return res.status(400).json({ error: 'Invalid plan or billing cycle' });
+    }
+    
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: customerEmail,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${process.env.DOMAIN || 'http://localhost:8080'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.DOMAIN || 'http://localhost:8080'}/pricing`,
+      metadata: {
+        userEmail: customerEmail,
+        plan: plan,
+        billingCycle: billingCycle
+      }
+    });
+
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// Handle Stripe webhook events
+app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Payment system not available' });
+  }
+  
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'customer.subscription.created':
+      const subscription = event.data.object;
+      console.log('Subscription created:', subscription.id);
+      // Update user's subscription status in your database
+      await handleSubscriptionCreated(subscription);
+      break;
+    case 'customer.subscription.updated':
+      const updatedSubscription = event.data.object;
+      console.log('Subscription updated:', updatedSubscription.id);
+      await handleSubscriptionUpdated(updatedSubscription);
+      break;
+    case 'customer.subscription.deleted':
+      const deletedSubscription = event.data.object;
+      console.log('Subscription deleted:', deletedSubscription.id);
+      await handleSubscriptionDeleted(deletedSubscription);
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  res.json({ received: true });
+});
+
+// Helper functions for webhook handling
+async function handleSubscriptionCreated(subscription) {
+  try {
+    const userEmail = subscription.metadata?.userEmail;
+    if (userEmail) {
+      const user = users.get(userEmail);
+      if (user) {
+        user.plan = 'pro';
+        user.stripeSubscriptionId = subscription.id;
+        user.stripeCustomerId = subscription.customer;
+        saveUsers(users);
+        console.log(`User ${userEmail} upgraded to Pro plan`);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling subscription created:', error);
+  }
+}
+
+async function handleSubscriptionUpdated(subscription) {
+  try {
+    const userEmail = subscription.metadata?.userEmail;
+    if (userEmail) {
+      const user = users.get(userEmail);
+      if (user) {
+        user.stripeSubscriptionId = subscription.id;
+        saveUsers(users);
+        console.log(`User ${userEmail} subscription updated`);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling subscription updated:', error);
+  }
+}
+
+async function handleSubscriptionDeleted(subscription) {
+  try {
+    const userEmail = subscription.metadata?.userEmail;
+    if (userEmail) {
+      const user = users.get(userEmail);
+      if (user) {
+        user.plan = 'free';
+        user.stripeSubscriptionId = null;
+        saveUsers(users);
+        console.log(`User ${userEmail} downgraded to Free plan`);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling subscription deleted:', error);
+  }
+}
+
+// Get subscription status
+app.get('/api/subscription-status', authenticateToken, async (req, res) => {
+  try {
+    const user = users.get(req.user.email);
+    
+    res.json({
+      hasActiveSubscription: user.plan === 'pro',
+      plan: user.plan,
+      status: user.plan === 'pro' ? 'active' : 'inactive'
+    });
+  } catch (error) {
+    console.error('Subscription status error:', error);
+    res.status(500).json({ error: 'Failed to get subscription status' });
   }
 });
 
