@@ -98,71 +98,10 @@
         }
 
         .dark .text-gray-500 {
-          color: var(--text-secondary) !important;
-        }
-
-        /* Dark mode toggle styles */
-        .dark-mode-on {
-          background-color: var(--accent-color);
-        }
-
-        .dark-mode-on #darkModeSlider {
-          transform: translateX(20px);
-        }
-
-        .dark-mode-off {
-          background-color: #d1d5db;
-        }
-
-        /* Main page dark mode styles */
-        .dark body {
-          background-color: var(--bg-primary);
-        }
-
-        .dark header {
-          background-color: var(--bg-secondary);
-          border-color: var(--border-color);
-        }
-
-        .dark .bg-gradient-to-br {
-          background: linear-gradient(to bottom right, var(--bg-secondary), var(--bg-tertiary));
-        }
-
-        .dark .text-gray-900 {
           color: var(--text-primary) !important;
         }
 
-        .dark .text-gray-600 {
-          color: var(--text-secondary) !important;
-        }
 
-        .dark .bg-white {
-          background-color: var(--bg-secondary);
-        }
-
-        .dark .shadow-sm {
-          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        .dark .shadow-md {
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-
-        .dark .shadow-lg {
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
-        .dark .border-gray-200 {
-          border-color: var(--border-color);
-        }
-
-        .dark .hover\:text-gray-900:hover {
-          color: var(--text-primary) !important;
-        }
-
-        .dark .hover\:bg-gray-100:hover {
-          background-color: var(--bg-tertiary) !important;
-        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -184,54 +123,58 @@
         </div>
     </header>
 
-    <!-- Hero Section with Tool -->
-    <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                    Your DTF workflow just got 10x faster...and saved you a headache
-                </h1>
-            </div>
+    <!-- Main Content -->
+    <main>
+        <!-- Home Content -->
+        <div id="homeContent">
+            <!-- Hero Section with Tool -->
+            <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-12">
+                        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                            Your DTF workflow just got 10x faster...and saved you a headache
+                        </h1>
+                    </div>
 
-            <!-- 3-Step Process -->
-            <div class="max-w-4xl mx-auto mb-12">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Just 3 easy steps to perfect gang sheets</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="text-center">
-                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-blue-600">1</span>
+                    <!-- 3-Step Process -->
+                    <div class="max-w-4xl mx-auto mb-12">
+                        <div class="text-center mb-8">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Just 3 easy steps to perfect gang sheets</h2>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Images & Set Quantities</h3>
-                        <p class="text-gray-600 text-sm">Drop your PDF files and specify how many of each you need</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-blue-600">2</span>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="text-center">
+                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl font-bold text-blue-600">1</span>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Images & Set Quantities</h3>
+                                <p class="text-gray-600 text-sm">Drop your PDF files and specify how many of each you need</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl font-bold text-blue-600">2</span>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Choose Your Gang Sheet Size</h3>
+                                <p class="text-gray-600 text-sm">Select width and max length for optimal layout</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl font-bold text-blue-600">3</span>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Generate & Download</h3>
+                                <p class="text-gray-600 text-sm">Get your perfectly optimized gang sheets instantly</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Choose Your Gang Sheet Size</h3>
-                        <p class="text-gray-600 text-sm">Select width and max length for optimal layout</p>
                     </div>
-                    <div class="text-center">
-                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-blue-600">3</span>
+                    
+                    <!-- Your Tool Embedded Here -->
+                    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="text-center flex-1">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">DTF Gang Sheet Generator</h2>
+                                <p class="text-gray-600">Upload your PDF files and generate optimized gang sheets instantly</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Generate & Download</h3>
-                        <p class="text-gray-600 text-sm">Get your perfectly optimized gang sheets instantly</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Your Tool Embedded Here -->
-            <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-                <div class="flex justify-between items-start mb-8">
-                    <div class="text-center flex-1">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">DTF Gang Sheet Generator</h2>
-                        <p class="text-gray-600">Upload your PDF files and generate optimized gang sheets instantly</p>
-                    </div>
-                </div>
-                
+                        
 
 
         <!-- ✅ Tab Navigation -->
@@ -1854,6 +1797,8 @@ Total Cost: ${totalCost}`;
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     
     <script>
+
+        
         // Authentication check and user management
         let currentUser = null;
         let userPlan = 'free';
@@ -2228,6 +2173,419 @@ Total Cost: ${totalCost}`;
                     settingsContent.insertBefore(upgradePrompt, settingsContent.firstChild);
                 }
             }
+        }
+        
+        // Initialize SPA navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('SPA Initializing...');
+            
+            // Check if there's a hash in the URL
+            const hash = window.location.hash.slice(1) || 'home';
+            console.log('Initial hash:', hash);
+            
+            // Set initial page
+            currentPage = hash;
+            
+            // Initialize navigation immediately
+            checkAuthStatus();
+            updateNavigationActiveState(hash);
+            
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', function(event) {
+                const page = event.state ? event.state.page : 'home';
+                console.log('Popstate event:', page);
+                navigateToPage(page, false);
+            });
+        });
+        
+        // Main navigation function
+        async function navigateToPage(page, updateHistory = true) {
+            console.log('Navigating to page:', page, 'Current page:', currentPage);
+            
+            if (page === currentPage) {
+                console.log('Already on this page, skipping navigation');
+                return;
+            }
+            
+            // Show loading spinner
+            showLoading(true);
+            
+            // Update current page
+            currentPage = page;
+            
+            // Update URL without page reload
+            if (updateHistory) {
+                const url = page === 'home' ? window.location.pathname : `${window.location.pathname}#${page}`;
+                window.history.pushState({ page }, '', url);
+                console.log('Updated URL to:', url);
+            }
+            
+            // Update navigation active state
+            updateNavigationActiveState(page);
+            
+            try {
+                console.log('Loading content for page:', page);
+                
+                // Load page content based on the page name
+                let content = '';
+                
+                if (page === 'home') {
+                    // Show the home content that's already there
+                    const homeContent = document.getElementById('homeContent');
+                    if (homeContent) {
+                        content = homeContent.innerHTML;
+                    } else {
+                        // If homeContent doesn't exist, show the original home page content
+                        content = `
+                            <!-- Hero Section with Tool -->
+                            <section class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+                                <div class="container mx-auto px-4">
+                                    <div class="text-center mb-12">
+                                        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                                            Your DTF workflow just got 10x faster...and saved you a headache
+                                        </h1>
+                                    </div>
+
+                                    <!-- 3-Step Process -->
+                                    <div class="max-w-4xl mx-auto mb-12">
+                                        <div class="text-center mb-8">
+                                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Just 3 easy steps to perfect gang sheets</h2>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            <div class="text-center">
+                                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <span class="text-2xl font-bold text-blue-600">1</span>
+                                                </div>
+                                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Images & Set Quantities</h3>
+                                                <p class="text-gray-600 text-sm">Drop your PDF files and specify how many of each you need</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <span class="text-2xl font-bold text-blue-600">2</span>
+                                                </div>
+                                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Choose Your Gang Sheet Size</h3>
+                                                <p class="text-gray-600 text-sm">Select width and max length for optimal layout</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <span class="text-2xl font-bold text-blue-600">3</span>
+                                                </div>
+                                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Generate & Download</h3>
+                                                <p class="text-gray-600 text-sm">Get your perfectly optimized gang sheets instantly</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Your Tool Embedded Here -->
+                                    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                                        <div class="flex justify-between items-start mb-8">
+                                            <div class="text-center flex-1">
+                                                <h2 class="text-2xl font-bold text-gray-900 mb-2">DTF Gang Sheet Generator</h2>
+                                                <p class="text-gray-600">Upload your PDF files and generate optimized gang sheets instantly</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Tab Navigation -->
+                                        <div class="bg-white shadow-md rounded-lg mb-6">
+                                            <div class="border-b border-gray-200">
+                                                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                                                    <button id="gangSheetTab" class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button active">
+                                                        Gang Sheet Generator
+                                                    </button>
+                                                    <button id="quoteTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
+                                                        Cost Calculator
+                                                    </button>
+                                                    <button id="settingsTab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-button">
+                                                        Settings
+                                                    </button>
+                                                </nav>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gang Sheet Generator Tab -->
+                                        <div id="gangSheetContent" class="tab-content">
+                                            <div class="bg-white shadow-md rounded-lg p-6">
+                                                <form id="uploadForm" class="space-y-4">
+                                                    <!-- File Requirements Info -->
+                                                    <div class="mb-4">
+                                                        <button id="fileRequirementsBtn" class="flex items-center text-sm text-blue-600 hover:text-blue-700 transition">
+                                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                            </svg>
+                                                            File Requirements
+                                                        </button>
+                                                        <div id="fileRequirementsContent" class="hidden mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                            <p class="text-sm text-gray-700 mb-2">For best results, ensure your file is properly formatted by:</p>
+                                                            <ul class="text-sm text-gray-600 space-y-1">
+                                                                <li>• Setting your file to the print size desired</li>
+                                                                <li>• Make sure you "Fit to Artwork Bounds"</li>
+                                                                <li>• Save file as a "Press Quality" PDF (even if your original art file is a PNG)</li>
+                                                            </ul>
+                                                            <p class="text-xs italic text-gray-500 mt-2">For best quality, use vector art files when possible.</p>
+                                                            <p class="text-xs italic text-gray-500 mt-2">Need help formatting? Check out the File Prep guide in the menu bar.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Enhanced Drag-and-Drop Zone for Multiple Files -->
+                                                    <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition">
+                                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                                            <!-- Cloud Upload Icon -->
+                                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                            </svg>
+                                                            <div class="text-lg font-medium text-gray-700">
+                                                                <span class="text-blue-600 hover:text-blue-500">Click to upload</span> or drag and drop
+                                                            </div>
+                                                            <p class="text-sm text-gray-500">PDF files only (max 10 files, 50MB total)</p>
+                                                        </div>
+                                                        <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
+                                                    </div>
+
+                                                    <!-- File List -->
+                                                    <div id="fileList" class="space-y-2 hidden">
+                                                        <!-- Files will be listed here -->
+                                                    </div>
+
+                                                    <!-- Gang Sheet Settings -->
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Gang Sheet Width (inches)</label>
+                                                            <input type="number" id="gangWidth" value="12" min="1" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Max Length (inches)</label>
+                                                            <input type="number" id="maxLength" value="18" min="1" max="200" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Generate Button -->
+                                                    <button type="submit" id="generateBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition font-semibold">
+                                                        Generate Gang Sheet
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        `;
+                    }
+                } else if (page === 'features') {
+                    content = '<div class="min-h-screen bg-gray-50 py-16"><div class="container mx-auto px-4"><div class="text-center mb-12"><h1 class="text-4xl font-bold text-gray-900 mb-6">Features</h1><p class="text-xl text-gray-600">Loading features page...</p></div></div></div>';
+                } else if (page === 'pricing') {
+                    content = '<div class="min-h-screen bg-gray-50 py-16"><div class="container mx-auto px-4"><div class="text-center mb-12"><h1 class="text-4xl font-bold text-gray-900 mb-6">Pricing</h1><p class="text-xl text-gray-600">Loading pricing page...</p></div></div></div>';
+                } else if (page === 'login') {
+                    content = '<div class="min-h-screen bg-gray-50 py-16"><div class="container mx-auto px-4"><div class="text-center mb-12"><h1 class="text-4xl font-bold text-gray-900 mb-6">Login</h1><p class="text-xl text-gray-600">Loading login page...</p></div></div></div>';
+                } else if (page === 'register') {
+                    content = '<div class="min-h-screen bg-gray-50 py-16"><div class="container mx-auto px-4"><div class="text-center mb-12"><h1 class="text-4xl font-bold text-gray-900 mb-6">Register</h1><p class="text-xl text-gray-600">Loading registration page...</p></div></div></div>';
+                } else {
+                    // For any other pages, show a simple placeholder
+                    content = `
+                        <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+                            <div class="text-center">
+                                <h1 class="text-4xl font-bold text-gray-900 mb-4">${page.charAt(0).toUpperCase() + page.slice(1)} Page</h1>
+                                <p class="text-gray-600 mb-8">This is the ${page} page content.</p>
+                                <button onclick="navigateToPage('home')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                                    Back to Home
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Update main content
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = content;
+                console.log('Content loaded and updated');
+                
+                // Re-initialize page-specific functionality
+                initializePageFunctionality(page);
+                
+                // Hide loading spinner
+                showLoading(false);
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+                
+                console.log('Navigation completed successfully');
+                
+            } catch (error) {
+                console.error('Error loading page:', error);
+                showLoading(false);
+                // Show error message
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen">
+                        <div class="text-center">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Page Not Found</h2>
+                            <p class="text-gray-600 mb-4">The page you're looking for doesn't exist.</p>
+                            <button onclick="navigateToPage('home')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                Go Home
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load page content
+        async function loadPageContent(page) {
+            const pageContent = {
+                'home': document.getElementById('homeContent').innerHTML,
+                'features': await fetchPageContent('features.html'),
+                'pricing': await fetchPageContent('pricing.html'),
+                'contact': await fetchPageContent('contact.html'),
+                'login': await fetchPageContent('login.html'),
+                'register': await fetchPageContent('register.html'),
+                'profile': await fetchPageContent('profile.html'),
+                'admin': await fetchPageContent('admin.html'),
+                'privacy-policy': await fetchPageContent('privacy-policy.html'),
+                'terms-of-service': await fetchPageContent('terms-of-service.html'),
+                'cookie-policy': await fetchPageContent('cookie-policy.html')
+            };
+            
+            return pageContent[page] || pageContent['home'];
+        }
+        
+        // Fetch content from other HTML files
+        async function fetchPageContent(filename) {
+            try {
+                const response = await fetch(filename);
+                const html = await response.text();
+                
+                // Extract content between <body> and </body> tags
+                const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+                if (bodyMatch) {
+                    let content = bodyMatch[1];
+                    
+                    // Remove the header section (we keep our static header)
+                    content = content.replace(/<!-- Professional Header -->[\s\S]*?<\/header>/i, '');
+                    
+                    // Remove any script tags to avoid conflicts
+                    content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
+                    
+                    return content;
+                }
+                
+                return '<div class="text-center py-12"><h2 class="text-2xl font-bold text-gray-900">Page Not Found</h2></div>';
+            } catch (error) {
+                console.error('Error fetching page content:', error);
+                return '<div class="text-center py-12"><h2 class="text-2xl font-bold text-gray-900">Error Loading Page</h2></div>';
+            }
+        }
+        
+        // Update navigation active state
+        function updateNavigationActiveState(page) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === page) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // Show/hide loading spinner
+        function showLoading(show) {
+            const spinner = document.getElementById('loadingSpinner');
+            if (show) {
+                spinner.classList.add('show');
+            } else {
+                spinner.classList.remove('show');
+            }
+        }
+        
+        // Initialize page-specific functionality
+        function initializePageFunctionality(page) {
+            // Re-initialize any page-specific JavaScript
+            if (page === 'home') {
+                // Re-initialize the gang sheet tool
+                // Note: The gang sheet tool is already initialized in the main script
+                // We just need to ensure the tabs work
+                initializeTabs();
+            }
+            
+            // Re-initialize dark mode
+            // Note: Dark mode is already initialized in the main script
+            
+            // Note: User authentication is handled by the main script
+            // No need to re-initialize here
+        }
+        
+        // Initialize tabs functionality
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                        btn.classList.add('border-transparent', 'text-gray-500');
+                    });
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active', 'border-blue-500', 'text-blue-600');
+                    button.classList.remove('border-transparent', 'text-gray-500');
+                    
+                    // Show corresponding content
+                    const targetId = button.id.replace('Tab', 'Content');
+                    const targetContent = document.getElementById(targetId);
+                    if (targetContent) {
+                        targetContent.classList.remove('hidden');
+                    }
+                });
+            });
+        }
+        
+        // Navigation logic for logged-in users
+        function updateNavigationForUser() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    ${currentUser.email === 'admin@ezgangsheets.com' ? '<a href="admin.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Admin</a>' : ''}
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition flex items-center">
+                            ${currentUser.firstName} ${currentUser.lastName}
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <hr class="my-1">
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateNavigationForGuest() {
+            const nav = document.getElementById('mainNav');
+            if (nav) {
+                nav.innerHTML = `
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Home</a>
+                    <a href="features.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Features</a>
+                    <a href="pricing.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Pricing</a>
+                    <a href="login.html" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition">Login</a>
+                    <a href="register.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Register</a>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            currentUser = null;
+            userPlan = 'free';
+            updateNavigationForGuest();
+            window.location.reload();
         }
     </script>
 </body>
